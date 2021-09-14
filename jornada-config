@@ -2861,7 +2861,7 @@ if [ "$INTERACTIVE" = True ]; then
   [ -e $CONFIG ] || touch $CONFIG
   calc_wt_size
    while true; do
-    if [ "$USER" = "root" ] || [ -z "$USER" ]; do
+    if [ "$USER" = "root" ] || [ -z "$USER" ]; then
       FUN=$(whiptail --title "Jornada 7xx Configuration (jornada-config), superuser mode" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
         "1 System Options" "Configure system settings" \
         "2 Display Options" "Configure display settings" \
