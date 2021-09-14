@@ -1901,7 +1901,7 @@ do_net_names () {
  }
 
 do_update() {
-  (cd /opt/jornada-config && git fetch)
+  (cd /opt/jornada-config && git pull)
   # git clone https://github.com/timob0/jornada-config.git /opt/jornada-config
   printf "Sleeping 5 seconds before reloading raspi-config\n" &&
   sleep 5 &&
@@ -2860,7 +2860,8 @@ do_proxy_menu() {
 if [ "$INTERACTIVE" = True ]; then
   [ -e $CONFIG ] || touch $CONFIG
   calc_wt_size
-  while [ "$USER" = "root" ] || [ -z "$USER" ]; do
+   while true; do
+    if [ "$USER" = "root" ] || [ -z "$USER" ]; do
       FUN=$(whiptail --title "Jornada 7xx Configuration (jornada-config), superuser mode" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
         "1 System Options" "Configure system settings" \
         "2 Display Options" "Configure display settings" \
@@ -2870,9 +2871,7 @@ if [ "$INTERACTIVE" = True ]; then
         "8 Update" "Update this tool to the latest version" \
         "9 About jornada-config" "Information about this configuration tool" \
         3>&1 1>&2 2>&3)
-  done
-  while true; do
-    if is_jornada ; then
+    elif is_jornada ; then
       FUN=$(whiptail --title "Jornada 7xx Configuration (jornada-config), user mode" --backtitle "$(cat /proc/device-tree/model)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
         "5 Localisation Options" "Configure language and regional settings" \
         "9 About raspi-config" "Information about this configuration tool" \
