@@ -1,5 +1,5 @@
 #!/bin/sh
-# Part of raspi-config https://github.com/RPi-Distro/raspi-config
+# Jornada Config, based on the raspi-config script
 #
 # See LICENSE file for copyright and license details
 
@@ -9,6 +9,11 @@ BLACKLIST=/etc/modprobe.d/raspi-blacklist.conf
 CONFIG=/boot/config.txt
 
 USER=${SUDO_USER:-$(who -m | awk '{ print $1 }')}
+
+is_jornada () {
+  # Find out how to check this
+  return 1
+}
 
 is_pi () {
   ARCH=$(dpkg --print-architecture)
@@ -114,7 +119,7 @@ calc_wt_size() {
   # NOTE: it's tempting to redirect stderr to /dev/null, so supress error 
   # output from tput. However in this case, tput detects neither stdout or 
   # stderr is a tty and so only gives default 80, 24 values
-  WT_HEIGHT=18
+  WT_HEIGHT=16
   WT_WIDTH=$(tput cols)
 
   if [ -z "$WT_WIDTH" ] || [ "$WT_WIDTH" -lt 60 ]; then
@@ -128,10 +133,8 @@ calc_wt_size() {
 
 do_about() {
   whiptail --msgbox "\
-This tool provides a straightforward way of doing initial
-configuration of the Raspberry Pi. Although it can be run
-at any time, some of the options may have difficulties if
-you have heavily customised your installation.
+This tool helps you with first time configuration
+of your HP Jornada 7xx under Devuan Linux.
 
 $(dpkg -s raspi-config 2> /dev/null | grep Version)\
 " 20 70 1
@@ -166,7 +169,7 @@ do_expand_rootfs() {
   # NOTE: the NOOBS partition layout confuses parted. For now, let's only 
   # agree to work with a sufficiently simple partition layout
   if [ "$PART_NUM" -ne 2 ]; then
-    whiptail --msgbox "Your partition layout is not currently supported by this tool. You are probably using NOOBS, in which case your root filesystem is already expanded anyway." 20 60 2
+    whiptail --msgbox "Your partition layout is not currently supported by this tool. Expected layout is DOS,swap,root." 20 60 2
     return 0
   fi
 
@@ -2858,30 +2861,24 @@ if [ "$INTERACTIVE" = True ]; then
   [ -e $CONFIG ] || touch $CONFIG
   calc_wt_size
   while [ "$USER" = "root" ] || [ -z "$USER" ]; do
-    if ! USER=$(whiptail --inputbox "raspi-config could not determine the default user.\\n\\nWhat user should these settings apply to?" 20 60 pi 3>&1 1>&2 2>&3); then
-      return 0
-    fi
-  done
-  while true; do
-    if is_pi ; then
-      FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --backtitle "$(cat /proc/device-tree/model)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
+      FUN=$(whiptail --title "Jornada 7xx Configuration (jornada-config), superuser mode" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
         "1 System Options" "Configure system settings" \
         "2 Display Options" "Configure display settings" \
         "3 Interface Options" "Configure connections to peripherals" \
-        "4 Performance Options" "Configure performance settings" \
         "5 Localisation Options" "Configure language and regional settings" \
         "6 Advanced Options" "Configure advanced settings" \
         "8 Update" "Update this tool to the latest version" \
+        "9 About jornada-config" "Information about this configuration tool" \
+        3>&1 1>&2 2>&3)
+  done
+  while true; do
+    if is_jornada ; then
+      FUN=$(whiptail --title "Jornada 7xx Configuration (jornada-config), user mode" --backtitle "$(cat /proc/device-tree/model)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
+        "5 Localisation Options" "Configure language and regional settings" \
         "9 About raspi-config" "Information about this configuration tool" \
         3>&1 1>&2 2>&3)
     else
-      FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-        "1 System Options" "Configure system settings" \
-        "2 Display Options" "Configure display settings" \
-        "3 Interface Options" "Configure connections to peripherals" \
-        "5 Localisation Options" "Configure language and regional settings" \
-        "6 Advanced Options" "Configure advanced settings" \
-        "8 Update" "Update this tool to the latest version" \
+      FUN=$(whiptail --title "Jornada 7xx Configuration (jornada-config), unknown device" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
         "9 About raspi-config" "Information about this configuration tool" \
         3>&1 1>&2 2>&3)
     fi
