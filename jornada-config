@@ -1905,7 +1905,7 @@ do_update() {
   # git clone https://github.com/timob0/jornada-config.git /opt/jornada-config
   printf "Sleeping 5 seconds before reloading raspi-config\n" &&
   sleep 5 &&
-  exec raspi-config
+  exec /opt/jornada-config/jornada-config
 }
 
 do_audio() {
