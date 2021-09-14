@@ -11,8 +11,11 @@ CONFIG=/boot/config.txt
 USER=${SUDO_USER:-$(who -m | awk '{ print $1 }')}
 
 is_jornada () {
-  # Find out how to check this
-  return 1
+  if ! grep -q "HP Jornada" /proc/cpuinfo; then
+    return 1
+  else
+    return 0
+  fi
 }
 
 CMDLINE=/proc/cmdline
