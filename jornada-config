@@ -1901,7 +1901,8 @@ do_net_names () {
  }
 
 do_update() {
-  git clone https://github.com/timob0/jornada-config.git /opt/jornada-config
+  (cd /opt/jornada-config && git fetch)
+  # git clone https://github.com/timob0/jornada-config.git /opt/jornada-config
   printf "Sleeping 5 seconds before reloading raspi-config\n" &&
   sleep 5 &&
   exec raspi-config
