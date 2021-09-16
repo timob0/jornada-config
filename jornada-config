@@ -420,6 +420,9 @@ get_boot_cli() {
 get_autologin() {
   if [ $(get_boot_cli) -eq 0 ]; then
     # booting to CLI
+    echo 0
+  else
+    echo 1
   fi
 }
 
