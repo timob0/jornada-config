@@ -222,6 +222,25 @@ do_change_pass() {
   whiptail --msgbox "Password changed successfully" 20 60 1
 }
 
+do_add_user() {
+  NEWUSER="$1"
+  while [ -z "$NEWUSER" ] && [ "$INTERACTIVE" = True ]; do
+    NEWUSER=$(whiptail --inputbox "Please enter new user name" 20 60 3>&1 1>&2 2>&3)
+    if [ $? -ne 0 ]; then
+      return 0
+    elif [ -z "$NEWUSER" ]; then
+      whiptail --msgbox "Please enter a non empty user name." 20 60
+    fi
+  done
+  # add the NEWUSER
+  useradd -G sudo -m -s /bin/bash $NEWUSER
+
+  whiptail --msgbox "You will now be asked to enter a new password for the $NEWUSER user" 20 60 1
+  passwd $NEWUSER &&
+  whiptail --msgbox "User created successfully." 20 60 1
+}
+
+
 do_configure_keyboard() {
   printf "Reloading keymap. This may take a short while\n"
   return 0
@@ -968,7 +987,7 @@ do_system_menu() {
       S4\ *) do_hostname ;;
       S5\ *) do_boot_behaviour ;;
       S6\ *) do_boot_wait ;;
-      S7\ *) do_nothing ;;
+      S7\ *) do_add_user ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
@@ -979,7 +998,7 @@ do_display_menu() {
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "D1 X11 Window Manager" "Change X11 Window Manager" \
       "D2 LCD Setup" "Change LCD brightness and contrast" \
-      "D3 Console Font" "Change Console Font" \
+      "D3 Console Font" "Change Console Font" \  
       3>&1 1>&2 2>&3)
   else
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
@@ -1001,16 +1020,10 @@ do_display_menu() {
 }
 
 do_interface_menu() {
-  if is_pi ; then
-    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Interfacing Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "P2 SSH" "Enable/disable remote command line access using SSH" \
-      "P3 VNC" "Enable/disable graphical remote access using RealVNC" \
-      3>&1 1>&2 2>&3)
-  else
-    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Interfacing Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "P2 SSH" "Enable/disable remote command line access using SSH" \
-      3>&1 1>&2 2>&3)
-  fi
+  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Interfacing Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+    "P2 SSH" "Enable/disable remote command line access using SSH" \
+    "P3 VNC" "Enable/disable graphical remote access using RealVNC" \
+    3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
     return 0
