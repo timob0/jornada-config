@@ -1106,26 +1106,15 @@ if [ "$INTERACTIVE" = True ]; then
   [ -e $CONFIG ] || touch $CONFIG
   calc_wt_size
    while true; do
-    if [ "$USER" = "root" ] || [ -z "$USER" ]; then
-      FUN=$(whiptail --title "Jornada 7xx Configuration (jornada-config), superuser mode" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-        "1 System Options" "Configure system settings" \
-        "2 Display Options" "Configure display settings" \
-        "3 Interface Options" "Configure connections to peripherals" \
-        "5 Localisation Options" "Configure language and regional settings" \
-        "6 Advanced Options" "Configure advanced settings" \
-        "8 Update" "Update this tool to the latest version" \
-        "9 About jornada-config" "Information about this configuration tool" \
-        3>&1 1>&2 2>&3)
-    elif is_jornada ; then
-      FUN=$(whiptail --title "Jornada 7xx Configuration (jornada-config), user mode" --backtitle "$(cat /proc/device-tree/model)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-        "5 Localisation Options" "Configure language and regional settings" \
-        "9 About raspi-config" "Information about this configuration tool" \
-        3>&1 1>&2 2>&3)
-    else
-      FUN=$(whiptail --title "Jornada 7xx Configuration (jornada-config), unknown device" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-        "9 About raspi-config" "Information about this configuration tool" \
-        3>&1 1>&2 2>&3)
-    fi
+    FUN=$(whiptail --title "Jornada 7xx Configuration (jornada-config), superuser mode" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
+      "1 System Options" "Configure system settings" \
+      "2 Display Options" "Configure display settings" \
+      "3 Interface Options" "Configure connections to peripherals" \
+      "5 Localisation Options" "Configure language and regional settings" \
+      "6 Advanced Options" "Configure advanced settings" \
+      "8 Update" "Update this tool to the latest version" \
+      "9 About jornada-config" "Information about this configuration tool" \
+      3>&1 1>&2 2>&3)
     RET=$?
     if [ $RET -eq 1 ]; then
       do_finish
