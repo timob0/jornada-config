@@ -744,6 +744,39 @@ do_proxy() {
   fi
 }
 
+
+do_lcd_setup() {
+
+  BRIGHT=$(whiptail --title "Set screen brightness" --radiolist \
+  "0" 14 60 5 \
+  "64" OFF \
+  "128" ON \
+  "192" OFF \
+  "255" OFF \
+  OFF 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    echo $BRIGHT > /sys/class/backlight/s1d13xxxfb/brightness
+  fi
+
+  CONTRAST=$(whiptail --title "Set screen brightness" --radiolist \
+  "0" 14 60 5 \
+  "64" OFF \
+  "128" ON \
+  "192" OFF \
+  "255" OFF \
+  OFF 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    echo $CONTRAST > /sys/devices/platform/jornada_lcd/lcd/s1d13xxxfb/contrast
+  fi
+
+  if (whiptail --title "Save Changes?" --yesno "Do you want to make the brightness / contrast changes permanent? If yes, then your bash profile will be updated." 10 60) then
+    echo /sys/class/backlight/s1d13xxxfb/brightness
+    echo /sys/devices/platform/jornada_lcd/lcd/s1d13xxxfb/contrast
+  else
+    echo "You chose No. Exit status was $?."
+  fi
+}
+
 nonint() {
   "$@"
 }
@@ -821,7 +854,7 @@ do_display_menu() {
   elif [ $RET -eq 0 ]; then
     case "$FUN" in
       D1\ *) do_nothing ;;
-      D2\ *) do_nothing ;;
+      D2\ *) do_lcd_setup ;;
       D3\ *) do_nothing ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
@@ -963,7 +996,7 @@ if [ "$INTERACTIVE" = True ]; then
         A9\ *) do_about ;;
         U1\ *) do_nothing ;;
         U2\ *) do_nothing ;;
-        U3\ *) do_nothing ;;
+        U3\ *) do_lcd_setup ;;
         *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
       esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
     else
