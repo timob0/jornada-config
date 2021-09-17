@@ -929,7 +929,7 @@ if [ "$INTERACTIVE" = True ]; then
   calc_wt_size
   whiptail --msgbox "Running for user: $USER" 12 60 1
    while true; do
-    if [ $USER -eq "root"]; then
+    if [ $USER -eq "root" ]; then
       FUN=$(whiptail --title "Jornada 7xx Configuration (jornada-config), SYSTEM options" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
         "A1 System Options" "Configure system settings" \
         "A2 Display Options" "Configure display settings" \
