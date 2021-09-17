@@ -760,11 +760,11 @@ do_proxy() {
 }
 
 get_brightness() {
-  return `echo /sys/class/backlight/s1d13xxxfb/brightness`
+  return `cat /sys/class/backlight/s1d13xxxfb/brightness`
 }
 
 get_contrast() {
-  return `echo /sys/devices/platform/jornada_lcd/lcd/s1d13xxxfb/contrast`
+  return `cat /sys/devices/platform/jornada_lcd/lcd/s1d13xxxfb/contrast`
 }
 
 set_brightness() {
