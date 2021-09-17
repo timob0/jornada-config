@@ -792,10 +792,10 @@ do_lcd_setup() {
       return 0
     elif [ $RET -eq 0 ]; then
       case "$FUN" in
-        1\ *) BRIGHT=$((BRIGHT+5)) && set_brightness $BRIGHT ;;
-        2\ *) BRIGHT=$((BRIGHT-5)) && set_brightness $BRIGHT ;;
-        3\ *) CONTRAST=$((CONTRAST+5)) &&  set_contrast $CONTRAST ;;
-        4\ *) CONTRAST=$((CONTRAST-5)) &&  set_contrast $CONTRAST ;;
+        1\ *) BRIGHT=$(($BRIGHT+5)) && set_brightness $BRIGHT ;;
+        2\ *) BRIGHT=$(($BRIGHT-5)) && set_brightness $BRIGHT ;;
+        3\ *) CONTRAST=$(($CONTRAST+5)) &&  set_contrast $CONTRAST ;;
+        4\ *) CONTRAST=$(($CONTRAST-5)) &&  set_contrast $CONTRAST ;;
         5\ *) do_save_lcd_setup ;;
         *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
       esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
