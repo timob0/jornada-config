@@ -921,28 +921,41 @@ if [ "$INTERACTIVE" = True ]; then
   [ -e $CONFIG ] || touch $CONFIG
   calc_wt_size
    while true; do
-    FUN=$(whiptail --title "Jornada 7xx Configuration (jornada-config), superuser mode" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-      "1 System Options" "Configure system settings" \
-      "2 Display Options" "Configure display settings" \
-      "3 Interface Options" "Configure connections to peripherals" \
-      "5 Localisation Options" "Configure language and regional settings" \
-      "6 Advanced Options" "Configure advanced settings" \
-      "8 Update" "Update this tool to the latest version" \
-      "9 About jornada-config" "Information about this configuration tool" \
-      3>&1 1>&2 2>&3)
+    if [ $USER = "root"]; then
+      FUN=$(whiptail --title "Jornada 7xx Configuration (jornada-config), SYSTEM options" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
+        "1 System Options" "Configure system settings" \
+        "2 Display Options" "Configure display settings" \
+        "3 Interface Options" "Configure connections to peripherals" \
+        "5 Localisation Options" "Configure language and regional settings" \
+        "6 Advanced Options" "Configure advanced settings" \
+        "8 Update" "Update this tool to the latest version" \
+        "9 About jornada-config" "Information about this tool" \
+        3>&1 1>&2 2>&3)
+    else
+      FUN=$(whiptail --title "Jornada 7xx Configuration (jornada-config), USER options" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
+        "1 Wifi On/Off" "Turn Wifi on/off" \
+        "2 X11 On/Off" "Turn Desktop boot on/off" \
+        "3 Setup shell" "Set the login shell" \
+        "3 Setup LCD" "Set the screen brightness and contrast" \
+        "9 About jornada-config" "Information about this tool" \
+        3>&1 1>&2 2>&3)
+    fi
     RET=$?
     if [ $RET -eq 1 ]; then
       do_finish
     elif [ $RET -eq 0 ]; then
       case "$FUN" in
-        1\ *) do_system_menu ;;
-        2\ *) do_display_menu ;;
-        3\ *) do_interface_menu ;;
-        4\ *) do_performance_menu ;;
-        5\ *) do_internationalisation_menu ;;
-        6\ *) do_advanced_menu ;;
-        8\ *) do_update ;;
-        9\ *) do_about ;;
+        A1\ *) do_system_menu ;;
+        A2\ *) do_display_menu ;;
+        A3\ *) do_interface_menu ;;
+        A4\ *) do_performance_menu ;;
+        A5\ *) do_internationalisation_menu ;;
+        A6\ *) do_advanced_menu ;;
+        A8\ *) do_update ;;
+        A9\ *) do_about ;;
+        U1\ *) do_nothing ;;
+        U2\ *) do_nothing ;;
+        U3\ *) do_nothing ;;
         *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
       esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
     else
