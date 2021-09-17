@@ -760,11 +760,13 @@ do_proxy() {
 }
 
 get_brightness() {
-  return `cat /sys/class/backlight/s1d13xxxfb/brightness`
+  RET=`cat /sys/class/backlight/s1d13xxxfb/brightness`
+  return $RET
 }
 
 get_contrast() {
-  return `cat /sys/devices/platform/jornada_lcd/lcd/s1d13xxxfb/contrast`
+  RET=`cat /sys/devices/platform/jornada_lcd/lcd/s1d13xxxfb/contrast`
+  return $RET
 }
 
 set_brightness() {
@@ -781,11 +783,11 @@ do_lcd_setup() {
     CONTRAST=`cat /sys/devices/platform/jornada_lcd/lcd/s1d13xxxfb/contrast`
     
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "LCD Setup" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "1   (*) +" "Brightness ($BRIGHT) increase" \
-      "2 - (*)" "Brightness           decrease" \
-      "3   (#) +" "Contrast ($CONTRAST) increase" \
-      "4 - (#)" "Contrast             decrease" \
-      "S Save" "Save settings to $USER profile" \
+      "b (*) +" "Brightness increase ($BRIGHT)" \
+      "v (*) -" "           decrease" \
+      "c (#) +" "Contrast increase ($CONTRAST)" \
+      "x (#) -" "         decrease" \
+      "s Save" "Save settings to ${USER}s profile" \
       3>&1 1>&2 2>&3)
     RET=$?
     if [ $RET -eq 1 ]; then
