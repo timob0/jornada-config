@@ -5,11 +5,9 @@
 
 INTERACTIVE=True
 ASK_TO_REBOOT=0
-BLACKLIST=/etc/modprobe.d/raspi-blacklist.conf
-CONFIG=/boot/config.txt
 
 USER=${SUDO_USER:-$(who -m | awk '{ print $1 }')}
-
+MACHINE='test;'
 is_jornada () {
   if ! grep -q "HP Jornada" /proc/cpuinfo; then
     return 1
@@ -50,7 +48,7 @@ calc_wt_size() {
   # NOTE: it's tempting to redirect stderr to /dev/null, so supress error 
   # output from tput. However in this case, tput detects neither stdout or 
   # stderr is a tty and so only gives default 80, 24 values
-  WT_HEIGHT=14
+  WT_HEIGHT=13
   WT_WIDTH=$(tput cols)
 
   if [ -z "$WT_WIDTH" ] || [ "$WT_WIDTH" -lt 60 ]; then
@@ -240,11 +238,6 @@ do_add_user() {
   whiptail --msgbox "User created successfully." 20 60 1
 }
 
-
-do_configure_keyboard() {
-  printf "Reloading keymap. This may take a short while\n"
-  return 0
-}
 
 do_change_locale() {
   if [ "$INTERACTIVE" = True ]; then
@@ -807,12 +800,30 @@ do_lcd_setup() {
 
 do_switch_wifi() {
   if (whiptail --title "Wifi Status" --yes-button "Wifi On" --no-button "Wifi Off"  --yesno "Please select On or Off to switich Wifi state" 10 60) then
-    whiptail --msgbox "Enabling Wifi..." 10 60 1
+    whiptail --infobox "Enabling Wifi..." 10 60 1
     connmanctl enable wifi
   else
-    whiptail --msgbox "Disabling Wifi..." 10 60 1
-    connmanctl enable wifi
+    whiptail --infobox "Disabling Wifi..." 10 60 1
+    connmanctl disable wifi
   fi
+}
+
+do_change_keyboard() {
+  # check if all scripts are in place
+  if [ ! -f /etc/init.d/j720-keyboard.sh ]; then
+    cp -f /opt/jornada-config/scripts/init/j720-keyboard.sh /etc/init.d
+    ln -s /etc/init.d/j720-keyboard.sh /etc/rc2.d/S01j720-keyboard.sh
+    whiptail --msgbox "Copied j720-keyboard script to /etc/init.d" 10 60 1
+  fi 
+
+  if (whiptail --title "Keyboard layout" --yes-button "US" --no-button "German"  --yesno "Please select which keymap to install at boot time. The change will become effective immediately." 10 60) then
+    whiptail --infobox "Install and load US keymap..." 10 60 1
+    cp -f /opt/jornada-config/keymaps/us-j720-key.map /etc/j720-key.map
+  else
+    whiptail --infobox "Install and load keymap..." 10 60 1
+    cp -f /opt/jornada-config/keymaps/de-j720-key.map /etc/j720-key.map
+  fi
+  /etc/init.d/j720-keyboard.sh start
 }
 
 nonint() {
@@ -944,7 +955,7 @@ do_internationalisation_menu() {
     case "$FUN" in
       L1\ *) do_change_locale ;;
       L2\ *) do_change_timezone ;;
-      L3\ *) do_nothing ;;
+      L3\ *) do_change_keyboard ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
@@ -1000,7 +1011,7 @@ if [ "$INTERACTIVE" = True ]; then
   calc_wt_size
    while true; do
     if [ "$USER" = "root" ]; then
-      FUN=$(whiptail --title "Jornada 7xx Configuration (jornada-config), SYSTEM options ($USER)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
+      FUN=$(whiptail --title "Jornada 7xx Configuration (jornada-config), SYSTEM options ($USER)" --backtitle=$MACHINE --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
         "A1 System Options" "Configure system settings" \
         "A2 Display Options" "Configure display settings" \
         "A3 Interface Options" "Configure connections to peripherals" \
