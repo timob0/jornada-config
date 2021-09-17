@@ -787,18 +787,18 @@ do_lcd_setup() {
       "v (*) -" "           decrease" \
       "c (#) +" "Contrast increase ($CONTRAST)" \
       "x (#) -" "         decrease" \
-      "s Save" "Save settings to ${USER}s profile" \
+      "S Save" "Save settings to ${USER}s profile" \
       3>&1 1>&2 2>&3)
     RET=$?
     if [ $RET -eq 1 ]; then
       return 0
     elif [ $RET -eq 0 ]; then
       case "$FUN" in
-        1\ *) BRIGHT=$(($BRIGHT+5)) && set_brightness $BRIGHT ;;
-        2\ *) BRIGHT=$(($BRIGHT-5)) && set_brightness $BRIGHT ;;
-        3\ *) CONTRAST=$(($CONTRAST+5)) &&  set_contrast $CONTRAST ;;
-        4\ *) CONTRAST=$(($CONTRAST-5)) &&  set_contrast $CONTRAST ;;
-        5\ *) do_save_lcd_setup ;;
+        b\ *) BRIGHT=$(($BRIGHT+5)) && set_brightness $BRIGHT ;;
+        v\ *) BRIGHT=$(($BRIGHT-5)) && set_brightness $BRIGHT ;;
+        c\ *) CONTRAST=$(($CONTRAST+5)) &&  set_contrast $CONTRAST ;;
+        x\ *) CONTRAST=$(($CONTRAST-5)) &&  set_contrast $CONTRAST ;;
+        S\ *) do_save_lcd_setup ;;
         *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
       esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
     fi
