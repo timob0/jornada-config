@@ -777,8 +777,8 @@ set_contrast() {
 
 do_lcd_setup() {
   while true; do
-    BRIGHT=$(get_brightness)
-    CONTRAST=$(get_contrast)
+    BRIGHT=`cat /sys/class/backlight/s1d13xxxfb/brightness`
+    CONTRAST=`cat /sys/devices/platform/jornada_lcd/lcd/s1d13xxxfb/contrast`
     
     FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "LCD Setup" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "1   (*) +" "Brightness ($BRIGHT) increase" \
