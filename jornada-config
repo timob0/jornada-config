@@ -557,6 +557,7 @@ do_net_names () {
  }
 
 do_update() {
+  echo "Please standby while updating..." 
   (cd /opt/jornada-config && git pull)
   # git clone https://github.com/timob0/jornada-config.git /opt/jornada-config
   printf "Sleeping 5 seconds before reloading...\n" &&
