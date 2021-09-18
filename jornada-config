@@ -831,15 +831,14 @@ do_change_keyboard() {
 }
 
 do_shell_setup() {
-  SHELLS=`cat /etc/shells | grep '/bin' | sort -u | awk '{ print $1 " shell " ($1!="$SHELL")?"OFF":"ON" }'`
+  SHELLS=`cat /etc/shells | grep '/bin' | sort -u | awk -v shell=$SHELL '{ print ($1!=shell)?$1 " " "OFF":$1 " " "ON" }'`
   SHELLOPT=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --radiolist "Shell setup" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
 	$SHELLS \
       3>&1 1>&2 2>&3)
   if [ $? -eq 0 ]; then
-    case "$MYSHELL" in
-      S7\ *) do_add_user ;;
-      *) whiptail --msgbox "Programmer error: unrecognized option" 14 60 1 ;;
-    esac
+    echo $SHELLOPT
+    chsh -s $SHELLOPT
+    whiptail --infobox "Your shell has been changed to $SHELLOPT from next login." 14 60 1    
   fi
 }
 
