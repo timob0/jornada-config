@@ -837,7 +837,7 @@ do_shell_setup() {
 	$SHELLS \
       3>&1 1>&2 2>&3)
   if [ $? -eq 0 ]; then
-    chsh -s $SHELLOPT
+    chsh $USER -s $SHELLOPT
     whiptail --msgbox "Your shell has been changed to $SHELLOPT from next login." 14 60 1    
   fi
 }
