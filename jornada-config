@@ -844,7 +844,7 @@ do_shell_setup() {
 }
 
 do_x11_wm_setup() {
-  whiptail --infobox "Please select your desired X11 window manager" 14 60 1 ;;
+  whiptail --infobox "Please select your desired X11 window manager" 14 60 1
   update-alternatives --config x-window-manager
 }
 
