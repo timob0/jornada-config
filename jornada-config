@@ -10,6 +10,8 @@ USER=${SUDO_USER:-$(who -m | awk '{ print $1 }')}
 MACHINE=`cat /proc/cpuinfo | grep Jornada | cut -c12-`
 TITLE="HP Jornada Configuration (jornada-config)"
 BTITLE=$MACHINE
+echo $USER
+echo $MACHINE
 
 is_jornada () {
   if ! grep -q "HP Jornada" /proc/cpuinfo; then
