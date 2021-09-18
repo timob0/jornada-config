@@ -430,6 +430,7 @@ do_boot_behaviour() {
       "D Desktop" "After login: Start desktop" \
       "C Console" "After login: Stay on console" \
       "S Shell ..." "Setup shell for console session" \
+      "X X11 ..." "Setup X11 window manager" \
       3>&1 1>&2 2>&3)
   else
     BOOTOPT=$1
@@ -456,6 +457,7 @@ do_boot_behaviour() {
         whiptail --msgbox "Desktop will not autostart." 14 60 2
 	;;
       S*) do_shell_setup ;;
+      X*) do_x11_wm_setup ;;
       *)
         whiptail --msgbox "Programmer error, unrecognised boot option" 20 60 2
         return 1
@@ -768,10 +770,10 @@ do_lcd_setup() {
     CONTRAST=`cat /sys/devices/platform/jornada_lcd/lcd/s1d13xxxfb/contrast`
     
     FUN=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --menu "LCD Setup" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "b (*) +" "Brightness increase ($BRIGHT)" \
-      "v (*) -" "           decrease" \
-      "c (#) +" "Contrast increase ($CONTRAST)" \
-      "x (#) -" "         decrease" \
+      "B (*) +" "Brightness increase ($BRIGHT)" \
+      "V (*) -" "           decrease" \
+      "C (#) +" "Contrast increase ($CONTRAST)" \
+      "X (#) -" "         decrease" \
       "S Save" "Save settings to ${USER}s profile" \
       3>&1 1>&2 2>&3)
     RET=$?
@@ -779,10 +781,10 @@ do_lcd_setup() {
       return 0
     elif [ $RET -eq 0 ]; then
       case "$FUN" in
-        b\ *) BRIGHT=$(($BRIGHT+5)) && set_brightness $BRIGHT ;;
-        v\ *) BRIGHT=$(($BRIGHT-5)) && set_brightness $BRIGHT ;;
-        c\ *) CONTRAST=$(($CONTRAST+5)) &&  set_contrast $CONTRAST ;;
-        x\ *) CONTRAST=$(($CONTRAST-5)) &&  set_contrast $CONTRAST ;;
+        B\ *) BRIGHT=$(($BRIGHT+5)) && set_brightness $BRIGHT ;;
+        V\ *) BRIGHT=$(($BRIGHT-5)) && set_brightness $BRIGHT ;;
+        C\ *) CONTRAST=$(($CONTRAST+5)) &&  set_contrast $CONTRAST ;;
+        X\ *) CONTRAST=$(($CONTRAST-5)) &&  set_contrast $CONTRAST ;;
         S\ *) do_save_lcd_setup ;;
         *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
       esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
@@ -830,16 +832,20 @@ do_change_keyboard() {
 
 do_shell_setup() {
   SHELLS=`cat /etc/shells | grep '/bin' | sed -e 's#.*/##g' | sort -u | awk '{print $1 " shell" " OFF"}'`
-  echo $SHELLS
-  MYSHELL=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --radiolist "Shell setup" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
+  SHELLOPT=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --radiolist "Shell setup" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
 	$SHELLS \
       3>&1 1>&2 2>&3)
   if [ $? -eq 0 ]; then
     case "$MYSHELL" in
       S7\ *) do_add_user ;;
-      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+      *) whiptail --msgbox "Programmer error: unrecognized option" 14 60 1 ;;
     esac
   fi
+}
+
+do_x11_wm_setup() {
+  whiptail --infobox "Please select your desired X11 window manager" 14 60 1 ;;
+  update-alternatives --config x-window-manager
 }
 
 nonint() {
@@ -893,31 +899,6 @@ do_system_menu() {
       S4\ *) do_hostname ;;
       S5\ *) do_boot_wait ;;
       S7\ *) do_add_user ;;
-      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
-  fi
-}
-
-do_display_menu() {
-  if is_jornada ; then
-    FUN=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "D1 X11 Window Manager" "Change X11 Window Manager" \
-      "D2 LCD Setup" "Change LCD brightness and contrast" \
-      "D3 Console Font" "Change Console Font" \  
-      3>&1 1>&2 2>&3)
-  else
-    FUN=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "D1 X11 Window Manager" "Change X11 Window Manager" \
-      "D3 Console Font" "Change Console Font" \
-      3>&1 1>&2 2>&3)
-  fi
-  RET=$?
-  if [ $RET -eq 1 ]; then
-    return 0
-  elif [ $RET -eq 0 ]; then
-    case "$FUN" in
-      D1\ *) do_nothing ;;
-      D2\ *) do_lcd_setup ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
@@ -1001,7 +982,6 @@ if [ "$INTERACTIVE" = True ]; then
     if [ "$USER" = "root" ]; then
       FUN=$(whiptail --title "$TITLE, SYSTEM options ($USER)" --backtitle="$BTITLE" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
         "A1 System Options" "Configure system settings" \
-        "A2 Display Options" "Configure display settings" \
         "A3 Interface Options" "Configure connections to peripherals" \
         "A5 Localisation Options" "Configure language and regional settings" \
         "A6 Advanced Options" "Configure advanced settings" \
@@ -1024,7 +1004,6 @@ if [ "$INTERACTIVE" = True ]; then
     elif [ $RET -eq 0 ]; then
       case "$FUN" in
         A1\ *) do_system_menu ;;
-        A2\ *) do_display_menu ;;
         A3\ *) do_interface_menu ;;
         A4\ *) do_performance_menu ;;
         A5\ *) do_internationalisation_menu ;;
