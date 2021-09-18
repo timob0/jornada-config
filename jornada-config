@@ -998,7 +998,7 @@ if [ "$INTERACTIVE" = True ]; then
         "U3 LCD ..." "Set the screen brightness and contrast" \
         "U4 Startup ..." "System Startup Options" \
         "U5 Shutdown" "Poweroff the machine" \
-        "U6 Password" "Change password for the '$USER' user" \        
+        "U6 Password" "Change password for the '$USER' user" \
         "A9 About" "Information about this tool" \
         3>&1 1>&2 2>&3)
     fi
