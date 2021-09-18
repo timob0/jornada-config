@@ -125,7 +125,7 @@ do_expand_rootfs() {
   whiptail --scrolltext --msgbox "Current Disklayout:\n$(parted "$ROOT_DEV" -s unit MB p)\n\nNow turning off swap and resizing partition $ROOT_PART" 14 60 2
   swapoff -a
 
-  parted "$ROOT_DEV" --script \
+  parted --script "$ROOT_DEV" \
     rm 3 \
     resizepart 2 -256M \
     mkpart primary linux-swap -256 -0
