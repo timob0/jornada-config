@@ -837,14 +837,13 @@ do_shell_setup() {
 	$SHELLS \
       3>&1 1>&2 2>&3)
   if [ $? -eq 0 ]; then
-    echo $SHELLOPT
     chsh -s $SHELLOPT
-    whiptail --infobox "Your shell has been changed to $SHELLOPT from next login." 14 60 1    
+    whiptail --msgbox "Your shell has been changed to $SHELLOPT from next login." 14 60 1    
   fi
 }
 
 do_x11_wm_setup() {
-  whiptail --infobox "Please select your desired X11 window manager" 14 60 1
+  whiptail --infobox "Please select your desired X11 window manager" 10 60 1
   update-alternatives --config x-window-manager
 }
 
