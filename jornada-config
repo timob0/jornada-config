@@ -455,9 +455,7 @@ do_boot_behaviour() {
 	rm ~/.bash_profile
         whiptail --msgbox "Desktop will not autostart." 14 60 2
 	;;
-      S*)
-        whiptail --msgbox "Not yet implemented." 14 60 2
-	;;
+      S*) do_shell_setup ;;
       *)
         whiptail --msgbox "Programmer error, unrecognised boot option" 20 60 2
         return 1
@@ -831,9 +829,10 @@ do_change_keyboard() {
 }
 
 do_shell_setup() {
-  SHELLS=`cat /etc/shells | grep '/bin' | sed -e 's#.*/##g' | sort -u | awk '{print $1 " shell OFF"}'`
+  SHELLS=`cat /etc/shells | grep '/bin' | sed -e 's#.*/##g' | sort -u | awk '{print $1 " shell" " OFF"}'`
+  echo $SHELLS
   MYSHELL=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --radiolist "Shell setup" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
-	"AB X ON"
+	$SHELLS \
       3>&1 1>&2 2>&3)
   if [ $? -eq 0 ]; then
     case "$MYSHELL" in
@@ -1013,9 +1012,9 @@ if [ "$INTERACTIVE" = True ]; then
       FUN=$(whiptail --title "$TITLE, USER options ($USER)" --backtitle="$BTITLE" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
         "U1 Wifi Power" "Turn Wifi on/off" \
         "U2 Wifi ..." "Manage Wifi Networks" \
-        "U5 LCD ..." "Set the screen brightness and contrast" \
-        "U3 Startup ..." "System Startup Options" \
-        "U6 Shutdown" "Poweroff the machine" \
+        "U3 LCD ..." "Set the screen brightness and contrast" \
+        "U4 Startup ..." "System Startup Options" \
+        "U5 Shutdown" "Poweroff the machine" \
         "A9 About" "Information about this tool" \
         3>&1 1>&2 2>&3)
     fi
@@ -1033,11 +1032,10 @@ if [ "$INTERACTIVE" = True ]; then
         A8\ *) do_update ;;
         A9\ *) do_about ;;
         U1\ *) do_switch_wifi ;;
-        U5\ *) do_lcd_setup ;;
-        U2\ *) do_boot_behaviour ;;
-        U3\ *) do_x11_autostart ;;
-        U4\ *) do_shell_setup ;;
-        U6\ *) do_poweroff ;;
+        U2\ *) do_nothing ;;
+        U3\ *) do_lcd_setup ;;
+        U4\ *) do_boot_behaviour ;;
+        U5\ *) do_poweroff ;;
         *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
       esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
     else
