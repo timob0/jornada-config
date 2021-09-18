@@ -130,6 +130,8 @@ do_expand_rootfs() {
     resizepart 2 -256M \
     mkpart primary linux-swap -256 -0
 
+  sleep 5
+
   if [ "$INTERACTIVE" = True ]; then
     whiptail --msgbox "Root partition has been resized.\n\nNow re-creating swap and enlarging filesystem" 10 60 2
   fi
