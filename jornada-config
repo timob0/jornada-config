@@ -831,7 +831,7 @@ do_change_keyboard() {
 }
 
 do_shell_setup() {
-  SHELLS=`cat /etc/shells | grep '/bin' | sed -e 's#.*/##g' | sort -u | awk '{print $1 " shell OFF"}`
+  SHELLS=`cat /etc/shells | grep '/bin' | sed -e 's#.*/##g' | sort -u | awk '{print $1 " shell OFF"}'`
   MYSHELL=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --radiolist "Shell setup" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
 	"AB X ON"
       3>&1 1>&2 2>&3)
