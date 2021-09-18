@@ -131,7 +131,7 @@ do_expand_rootfs() {
     mkpart primary linux-swap -256 -0
 
   if [ "$INTERACTIVE" = True ]; then
-    whiptail --msgbox "Root partition has been resized.\n\nNow re-creating swap and enlarging filesystem" 6 60 2
+    whiptail --msgbox "Root partition has been resized.\n\nNow re-creating swap and enlarging filesystem" 10 60 2
   fi
 
   mkswap /dev/hda3 
@@ -545,10 +545,10 @@ do_net_names () {
  }
 
 do_update() {
-  whiptail --infobox "Please standby while updating..." 14 60 1
+  whiptail --infobox "Please standby while updating..." 10 60 1
   (cd /opt/jornada-config && git pull)
   # git clone https://github.com/timob0/jornada-config.git /opt/jornada-config
-  whiptail --infobox "Sleeping 5 seconds before reloading...\n" 14 60 1
+  whiptail --infobox "Sleeping 5 seconds before reloading...\n" 10 60 1
   sleep 5 &&
   exec /opt/jornada-config/jornada-config
 }
