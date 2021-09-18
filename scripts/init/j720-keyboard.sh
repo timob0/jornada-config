@@ -1,10 +1,10 @@
 #!/bin/sh
 ### BEGIN INIT INFO
 # Provides:          j720-keyboard.sh
-# Required-Start:    mountkernfs
+# Required-Start:    $remote_fs
 # Required-Stop:
-# X-Start-Before:    checkroot
-# Default-Start:     S
+# X-Start-Before:    
+# Default-Start:     2 3 4 5
 # Default-Stop:
 # X-Interactive:     true
 # Short-Description: Load the Jornada 720 keymap

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Jornada Config, based on the raspi-config script
+# HP Jornada Config, based on the jornada-config script
 #
 # See LICENSE file for copyright and license details
 
@@ -7,7 +7,10 @@ INTERACTIVE=True
 ASK_TO_REBOOT=0
 
 USER=${SUDO_USER:-$(who -m | awk '{ print $1 }')}
-MACHINE='test;'
+MACHINE=`cat /proc/cpuinfo | grep Jornada | cut -c12-`
+TITLE="HP Jornada Configuration (jornada-config)"
+BTITLE=$MACHINE
+
 is_jornada () {
   if ! grep -q "HP Jornada" /proc/cpuinfo; then
     return 1
@@ -421,9 +424,12 @@ get_autologin() {
 
 do_boot_behaviour() {
   if [ "$INTERACTIVE" = True ]; then
-    BOOTOPT=$(whiptail --title "Jornada 7xx Configuration Tool (raspi-config)" --menu "Boot Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
-      "B1 Login Prompt" "Require user to login" \
-      "B2 Autologin" "Automatic console login as '$USER' user" \
+    BOOTOPT=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --menu "Boot Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
+      "L Login" "Require user to login" \
+      "A Autologin" "Automatic login as '$USER' user" \
+      "D Desktop" "After login: Start desktop" \
+      "C Console" "After login: Stay on console" \
+      "S Shell ..." "Setup shell for console session" \
       3>&1 1>&2 2>&3)
   else
     BOOTOPT=$1
@@ -431,43 +437,31 @@ do_boot_behaviour() {
   fi
   if [ $? -eq 0 ]; then
     case "$BOOTOPT" in
-      B1*)
+      L*)
         cp -f /opt/jornada-config/scripts/inittab.noauto /etc/inittab
         whiptail --msgbox "Autologin disabled from next boot." 14 60 2
         ;;
-      B2*)
-        cp -f /opt/jornada-config/scripts/inittab.auto /etc/inittab
-        whiptail --msgbox "System set to automatic login." 14 60 2
+      A*)
+        cat /opt/jornada-config/scripts/inittab.auto | sed -e s/AUTOUSER/$USER/g > /etc/inittab
+        # cp -f /opt/jornada-config/scripts/inittab.auto /etc/inittab
+        whiptail --msgbox "System set to automatic login for $USER." 14 60 2
         ;;
+      D*)
+	rm ~/.bash_profile
+	echo "startx" > ~/.bash_profile
+        whiptail --msgbox "Desktop will autostart." 14 60 2
+        ;;
+      C*)
+	rm ~/.bash_profile
+        whiptail --msgbox "Desktop will not autostart." 14 60 2
+	;;
+      S*)
+        whiptail --msgbox "Not yet implemented." 14 60 2
+	;;
       *)
         whiptail --msgbox "Programmer error, unrecognised boot option" 20 60 2
         return 1
         ;;
-    esac
-  fi
-}
-
-do_x11_autostart() {
-  if [ "$INTERACTIVE" = True ]; then
-    BOOTOPT=$(whiptail --title "Jornada 7xx Configuration Tool (raspi-config)" --menu "Desktop Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
-      "B3 Auto Desktop" "Autostart X11 after login" \
-      "B4 Manual Desktop" "Do not autostart X11 after login" \
-      3>&1 1>&2 2>&3)
-  else
-    BOOTOPT=$1
-    true
-  fi
-  if [ $? -eq 0 ]; then
-    case "$BOOTOPT" in
-      B3*)
-	      rm ~/.bash_profile
-	      echo "startx" > ~/.bash_profile
-        whiptail --msgbox "Desktop will autostart." 14 60 2
-        ;;
-      B4*)
-	      rm ~/.bash_profile
-        whiptail --msgbox "Desktop will not autostart." 14 60 2
-	      ;;
     esac
   fi
 }
@@ -775,7 +769,7 @@ do_lcd_setup() {
     BRIGHT=`cat /sys/class/backlight/s1d13xxxfb/brightness`
     CONTRAST=`cat /sys/devices/platform/jornada_lcd/lcd/s1d13xxxfb/contrast`
     
-    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "LCD Setup" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+    FUN=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --menu "LCD Setup" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "b (*) +" "Brightness increase ($BRIGHT)" \
       "v (*) -" "           decrease" \
       "c (#) +" "Contrast increase ($CONTRAST)" \
@@ -808,11 +802,21 @@ do_switch_wifi() {
   fi
 }
 
+do_poweroff() {
+  if (whiptail --title "Powerdown" --yes-button "Yes" --no-button "No"  --yesno "Poweroff the system?" 10 60) then
+    whiptail --infobox "Powering down..." 10 60 1
+    poweroff
+  else
+    return 0
+  fi
+}
+
 do_change_keyboard() {
   # check if all scripts are in place
   if [ ! -f /etc/init.d/j720-keyboard.sh ]; then
     cp -f /opt/jornada-config/scripts/init/j720-keyboard.sh /etc/init.d
-    ln -s /etc/init.d/j720-keyboard.sh /etc/rc2.d/S01j720-keyboard.sh
+    update-rc.d j720-keyboard.sh defaults
+    update-rc.d console-setup disable
     whiptail --msgbox "Copied j720-keyboard script to /etc/init.d" 10 60 1
   fi 
 
@@ -824,6 +828,19 @@ do_change_keyboard() {
     cp -f /opt/jornada-config/keymaps/de-j720-key.map /etc/j720-key.map
   fi
   /etc/init.d/j720-keyboard.sh start
+}
+
+do_shell_setup() {
+  SHELLS=`cat /etc/shells | grep '/bin' | sed -e 's#.*/##g' | sort -u | awk '{print $1 " shell OFF"}`
+  MYSHELL=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --radiolist "Shell setup" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
+	"AB X ON"
+      3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    case "$MYSHELL" in
+      S7\ *) do_add_user ;;
+      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
+    esac
+  fi
 }
 
 nonint() {
@@ -855,18 +872,17 @@ done
 
 # Everything else needs to be run as root
 if [ $(id -u) -ne 0 ]; then
-  printf "Script must be run as root. Try 'sudo raspi-config'\n"
+  printf "Script must be run as root. Try 'sudo jornada-config'\n"
   exit 1
 fi
 
 do_system_menu() {
-  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "System Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+  FUN=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --menu "System Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
     "S1 Wireless LAN" "Enter SSID and passphrase" \
     "S3 Password" "Change password for the '$USER' user" \
     "S4 Hostname" "Set name for this computer on a network" \
-    "S5 Boot / Auto Login" "Select boot into desktop or to command line" \
-    "S6 Network at Boot" "Select wait for network connection on boot" \
-    "S7 Add User" "Add a regular user account" \
+    "S5 Network at Boot" "Select wait for network connection on boot" \
+    "S6 Add User" "Add a regular user account" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -876,8 +892,7 @@ do_system_menu() {
       S1\ *) do_nothing ;;
       S3\ *) do_change_pass ;;
       S4\ *) do_hostname ;;
-      S5\ *) do_boot_behaviour ;;
-      S6\ *) do_boot_wait ;;
+      S5\ *) do_boot_wait ;;
       S7\ *) do_add_user ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
@@ -886,13 +901,13 @@ do_system_menu() {
 
 do_display_menu() {
   if is_jornada ; then
-    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+    FUN=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "D1 X11 Window Manager" "Change X11 Window Manager" \
       "D2 LCD Setup" "Change LCD brightness and contrast" \
       "D3 Console Font" "Change Console Font" \  
       3>&1 1>&2 2>&3)
   else
-    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+    FUN=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --menu "Display Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "D1 X11 Window Manager" "Change X11 Window Manager" \
       "D3 Console Font" "Change Console Font" \
       3>&1 1>&2 2>&3)
@@ -904,14 +919,13 @@ do_display_menu() {
     case "$FUN" in
       D1\ *) do_nothing ;;
       D2\ *) do_lcd_setup ;;
-      D3\ *) do_nothing ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
 }
 
 do_interface_menu() {
-  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Interfacing Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+  FUN=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --menu "Interfacing Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
     "P2 SSH" "Enable/disable remote command line access using SSH" \
     "P3 VNC" "Enable/disable graphical remote access using RealVNC" \
     3>&1 1>&2 2>&3)
@@ -928,7 +942,7 @@ do_interface_menu() {
 }
 
 do_performance_menu() {
-  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Performance Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+  FUN=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --menu "Performance Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
     "P1 Overclock" "Configure CPU clock" \
     3>&1 1>&2 2>&3)
   RET=$?
@@ -943,7 +957,7 @@ do_performance_menu() {
 }
 
 do_internationalisation_menu() {
-  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Localisation Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+  FUN=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --menu "Localisation Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
     "L1 Locale" "Configure language and regional settings" \
     "L2 Timezone" "Configure time zone" \
     "L3 Keyboard" "Set keyboard layout to match your keyboard" \
@@ -963,7 +977,7 @@ do_internationalisation_menu() {
 
 do_advanced_menu() {
   if is_jornada ; then
-    FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
+    FUN=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
       "A1 Expand Filesystem" "Ensures that all of the SD card is available" \
       3>&1 1>&2 2>&3)
   fi
@@ -978,31 +992,6 @@ do_advanced_menu() {
   fi
 }
 
-do_proxy_menu() {
-  FUN=$(whiptail --title "Raspberry Pi Software Configuration Tool (raspi-config)" --menu "Network Proxy Settings" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-    "P1 All" "Set the same proxy for all schemes" \
-    "P2 HTTP" "Set the HTTP proxy" \
-    "P3 HTTPS" "Set the HTTPS/SSL proxy" \
-    "P4 FTP" "Set the FTP proxy" \
-    "P5 RSYNC" "Set the RSYNC proxy" \
-    "P6 Exceptions" "Set addresses for which a proxy server should not be used" \
-    3>&1 1>&2 2>&3)
-  RET=$?
-  if [ $RET -eq 1 ]; then
-    return 0
-  elif [ $RET -eq 0 ]; then
-    case "$FUN" in
-      P1\ *) do_proxy all ;;
-      P2\ *) do_proxy http ;;
-      P3\ *) do_proxy https ;;
-      P4\ *) do_proxy ftp ;;
-      P5\ *) do_proxy rsync ;;
-      P6\ *) do_proxy no;;
-      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
-  fi
-}
-
 #
 # Interactive use loop
 #
@@ -1011,7 +1000,7 @@ if [ "$INTERACTIVE" = True ]; then
   calc_wt_size
    while true; do
     if [ "$USER" = "root" ]; then
-      FUN=$(whiptail --title "Jornada 7xx Configuration (jornada-config), SYSTEM options ($USER)" --backtitle=$MACHINE --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
+      FUN=$(whiptail --title "$TITLE, SYSTEM options ($USER)" --backtitle="$BTITLE" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
         "A1 System Options" "Configure system settings" \
         "A2 Display Options" "Configure display settings" \
         "A3 Interface Options" "Configure connections to peripherals" \
@@ -1021,12 +1010,13 @@ if [ "$INTERACTIVE" = True ]; then
         "A9 About jornada-config" "Information about this tool" \
         3>&1 1>&2 2>&3)
     else
-      FUN=$(whiptail --title "Jornada 7xx Configuration (jornada-config), USER options ($USER)" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-        "U1 Wifi On/Off" "Turn Wifi on/off" \
-        "U2 X11 On/Off" "Turn Desktop boot on/off" \
-        "U3 Setup shell" "Set the login shell" \
-        "U3 Setup LCD" "Set the screen brightness and contrast" \
-        "A9 About jornada-config" "Information about this tool" \
+      FUN=$(whiptail --title "$TITLE, USER options ($USER)" --backtitle="$BTITLE" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
+        "U1 Wifi Power" "Turn Wifi on/off" \
+        "U2 Wifi ..." "Manage Wifi Networks" \
+        "U5 LCD ..." "Set the screen brightness and contrast" \
+        "U3 Startup ..." "System Startup Options" \
+        "U6 Shutdown" "Poweroff the machine" \
+        "A9 About" "Information about this tool" \
         3>&1 1>&2 2>&3)
     fi
     RET=$?
@@ -1043,8 +1033,11 @@ if [ "$INTERACTIVE" = True ]; then
         A8\ *) do_update ;;
         A9\ *) do_about ;;
         U1\ *) do_switch_wifi ;;
-        U2\ *) do_x11_autostart ;;
-        U3\ *) do_lcd_setup ;;
+        U5\ *) do_lcd_setup ;;
+        U2\ *) do_boot_behaviour ;;
+        U3\ *) do_x11_autostart ;;
+        U4\ *) do_shell_setup ;;
+        U6\ *) do_poweroff ;;
         *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
       esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
     else
