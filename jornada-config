@@ -858,10 +858,12 @@ for i in $*
 do
   case $i in
   --expand-rootfs)
-    INTERACTIVE=False
     do_expand_rootfs
     printf "Please reboot\n"
     exit 0
+    ;;
+  --asroot)
+    USER=root
     ;;
   nonint)
     INTERACTIVE=False
@@ -876,7 +878,7 @@ done
 
 # Everything else needs to be run as root
 if [ $(id -u) -ne 0 ]; then
-  printf "Script must be run as root. Try 'sudo jornada-config'\n"
+  printf "Script requires elevated rights. Try 'sudo jornada-config'\n"
   exit 1
 fi
 
@@ -994,6 +996,7 @@ if [ "$INTERACTIVE" = True ]; then
         "U3 LCD ..." "Set the screen brightness and contrast" \
         "U4 Startup ..." "System Startup Options" \
         "U5 Shutdown" "Poweroff the machine" \
+        "U6 Password" "Change password for the '$USER' user" \        
         "A9 About" "Information about this tool" \
         3>&1 1>&2 2>&3)
     fi
@@ -1014,6 +1017,7 @@ if [ "$INTERACTIVE" = True ]; then
         U3\ *) do_lcd_setup ;;
         U4\ *) do_boot_behaviour ;;
         U5\ *) do_poweroff ;;
+        U6\ *) do_change_pass ;;
         *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
       esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
     else
