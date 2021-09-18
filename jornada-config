@@ -545,10 +545,10 @@ do_net_names () {
  }
 
 do_update() {
-  whiptail --infobox "Please standby while updating..." 6 60 1
+  whiptail --infobox "Please standby while updating..." 14 60 1
   (cd /opt/jornada-config && git pull)
   # git clone https://github.com/timob0/jornada-config.git /opt/jornada-config
-  whiptail --infobox "Sleeping 5 seconds before reloading...\n" 6 60 1
+  whiptail --infobox "Sleeping 5 seconds before reloading...\n" 14 60 1
   sleep 5 &&
   exec /opt/jornada-config/jornada-config
 }
