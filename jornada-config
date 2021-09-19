@@ -414,7 +414,7 @@ do_switch_wifi_net() {
 
 do_wifi_setup() {
   if (get_wifi_available) then
-    ;
+    echo ""
   else
     whiptail --msgbox "Wifi not available, please check network card" 14 60
     return 1
