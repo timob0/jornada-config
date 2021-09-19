@@ -453,7 +453,7 @@ do_wifi_setup() {
 	    $NETWORKS \
       3>&1 1>&2 2>&3)
   if [ $? -eq 0 ] && [ -n "$NETWORK_NAME" ]; then
-    whiptail --infobox "Using network $NETWORK_NAME" 14 60 1
+    whiptail --msgbox "Using network $NETWORK_NAME" 14 60 1
   else
     whiptail --msgbox "Cancelled or nothing selected." 14 60 1
     return 0
@@ -466,7 +466,7 @@ do_wifi_setup() {
   echo $NETWORK_DATA
   echo $NETWORK_ID
   echo $NETWORK_SSID
-  whiptail --msgbox "selected:\n$NETWORK_DATA\n$NETWORK_ID\n$NETWORK_SSID" 14 60 1
+  whiptail --msgbox "selected:\ndata:$NETWORK_DATA\nid:$NETWORK_ID\nssid:$NETWORK_SSID\nname:$NETWORK_NAME" 14 60 1
   
   if [ -f /var/lib/connman/$NETWORK_ID/settings ]; then
     whiptail --yesno  "Network $NETWORK_NAME already configured, do you want to reconfigure?" 14 60 1
