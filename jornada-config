@@ -395,11 +395,16 @@ do_switch_wifi_net() {
 
   NETWORKS=`ls /var/lib/connman/ | grep wifi`
   NLIST=""
+  state="ON"
   for n in $NETWORKS
   do
     if [ -f /var/lib/connman/$n/settings ]; then
       name=`cat /var/lib/connman/$n/settings | grep Name | cut -f2 -d=`
-      NLIST="$NLIST $name $n OFF"
+      NLIST="$NLIST $n $name $state"
+    fi
+    # toggle state so that first one is selected
+    if [ $state="ON"]; then
+      state="OFF"
     fi
   done
 
