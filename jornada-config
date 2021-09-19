@@ -430,6 +430,7 @@ do_wifi_setup() {
     else
       whiptail --msgbox "Could not activate WiFi, aborting." 14 60
       return 0
+    fi
   fi
 
   whiptail --infobox "Scanning wifi networks ..." 14 60
