@@ -481,8 +481,6 @@ do_wifi_setup() {
   if [ $? -ne 0 ]; then
     return 0
   else
-    break
-  fi
 
   # Write connmanctl config file
   mkdir /var/lib/connman/$NETWORK_ID
