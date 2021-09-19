@@ -459,7 +459,7 @@ do_wifi_setup() {
     return 0
   fi
 
-  NETWORK_DATA=$(echo $NETWORKS | grep $NETWORK_NAME)
+  NETWORK_DATA=$(echo $NETWORKS | grep -w $NETWORK_NAME)
   NETWORK_ID=$(echo $NETWORK_DATA | cut -f2 -d' ') 
   NETWORK_SSID=$(echo $NETWORK_ID | cut -f2 -d'_') 
   
