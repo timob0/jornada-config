@@ -85,7 +85,7 @@ do_expand_rootfs() {
   whiptail --scrolltext --msgbox "Current Disklayout:\n$(parted "$ROOT_DEV" -s unit MB p | tail -n+7)" 14 60 2
 
   if (whiptail --title "Resize root partition" --yes-button "Continue" --no-button "Cancel"  --yesno "Now turning off swap and resizing partition $ROOT_PART - continue?" 14 60) then
-    ;
+    echo ""
   else
     whiptail --msgbox "Cancelled, no changes done." 10 60 2
     return 0
@@ -377,7 +377,7 @@ do_switch_wifi_power() {
 
 do_switch_wifi_net() {
   if (get_wifi_available) then
-    ;
+    echo ""
   else
     whiptail --msgbox "Wifi not available, please check network card" 14 60
     return 1
@@ -389,7 +389,7 @@ do_switch_wifi_net() {
     whiptail --infobox "Wifi not active, trying to power on ..." 14 60
     do_enable_wifi
     if (get_wifi_active) then
-      ;
+      echo ""
     else
       whiptail --msgbox "Could not activate WiFi, aborting." 14 60
       return 0
@@ -420,12 +420,12 @@ do_wifi_setup() {
   fi
 
   if (get_wifi_active) then
-    ;
+    echo ""
   else
     whiptail --infobox "Wifi not active, trying to power on ..." 14 60
     do_enable_wifi
     if (get_wifi_active) then
-      ;
+      echo ""
     else
       whiptail --msgbox "Could not activate WiFi, aborting." 14 60
       return 0
