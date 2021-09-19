@@ -397,11 +397,19 @@ do_switch_wifi_net() {
   NLIST=""
   for n in $NETWORKS
   do
-    $name=`cat /var/lib/connman/$n/settings | grep Name | cut -f2 -d=`
-    NLIST="$NLIST $name $n OFF"
-  done 
-  echo $NLIST
-  sleep 5
+    if [ -f /var/lib/connman/$n/settings ]; then
+      $name=`cat /var/lib/connman/$n/settings | grep Name | cut -f2 -d=`
+      NLIST="$NLIST $name $n OFF"
+    fi
+  done
+
+  whiptail --msgbox "$NLIST" 14 60 1 
+
+  if [ -z "$NLIST" ]; then
+    whiptail --msgbox "No networks configured yet." 14 60 1 
+    retun 1
+  fi
+
   NETWORK_ID=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --radiolist "Select WiFi network to connect" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
 	    $NLIST \
       3>&1 1>&2 2>&3)
