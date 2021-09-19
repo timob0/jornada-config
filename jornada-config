@@ -416,6 +416,7 @@ do_switch_wifi_net() {
   if [ $? -eq 0 ]; then
     whiptail --infobox "Connecting to network $NETWORK_NAME" 14 60 1
     connmanctl connect $NETWORK_ID
+    sleep 5
   else
     whiptail --msgbox "Cancelled." 14 60 1
     return 0
