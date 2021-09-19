@@ -393,6 +393,7 @@ do_switch_wifi_net() {
     else
       whiptail --msgbox "Could not activate WiFi, aborting." 14 60
       return 0
+    fi
   fi
 
   NETWORKS=`ls /var/lib/connman/wifi* | awk '{print $1 " WiFi OFF"}'`
