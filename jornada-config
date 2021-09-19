@@ -624,6 +624,10 @@ do
     printf "Config utility installed at next boot"
     exit 0;
     ;;
+  --update)
+    do_update
+    exit 0;
+    ;;
   nonint)
     INTERACTIVE=False
     "$@"
