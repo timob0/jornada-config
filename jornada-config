@@ -398,7 +398,7 @@ do_switch_wifi_net() {
   for n in $NETWORKS
   do
     if [ -f /var/lib/connman/$n/settings ]; then
-      $name=`cat /var/lib/connman/$n/settings | grep Name | cut -f2 -d=`
+      name=`cat /var/lib/connman/$n/settings | grep Name | cut -f2 -d=`
       NLIST="$NLIST $name $n OFF"
     fi
   done
