@@ -10,8 +10,8 @@ USER=${SUDO_USER:-$(who -m | awk '{ print $1 }')}
 MACHINE=`cat /proc/cpuinfo | grep Jornada | cut -c12-`
 TITLE="HP Jornada Configuration (jornada-config)"
 BTITLE=$MACHINE
-echo $USER
-echo $MACHINE
+# echo $USER
+# echo $MACHINE
 
 is_jornada () {
   if ! grep -q "HP Jornada" /proc/cpuinfo; then
@@ -22,11 +22,6 @@ is_jornada () {
 }
 
 CMDLINE=/proc/cmdline
-
-is_live() {
-    grep -q "boot=live" $CMDLINE
-    return $?
-}
 
 is_ssh() {
   if pstree -p | egrep --quiet --extended-regexp ".*sshd.*\($$\)"; then
@@ -50,9 +45,6 @@ deb_ver () {
 }
 
 calc_wt_size() {
-  # NOTE: it's tempting to redirect stderr to /dev/null, so supress error 
-  # output from tput. However in this case, tput detects neither stdout or 
-  # stderr is a tty and so only gives default 80, 24 values
   WT_HEIGHT=13
   WT_WIDTH=$(tput cols)
 
@@ -68,28 +60,10 @@ calc_wt_size() {
 do_about() {
   whiptail --msgbox "\
 This tool helps you with first time configuration
-of your HP Jornada 7xx under Devuan Linux.
+of your HP Jornada 7xx under Devuan Linux.\n\n
+Contibuted to the community at hpcfactor.com
 " 14 70 1
   return 0
-}
-
-get_can_expand() {
-  ROOT_PART="$(findmnt / -o source -n)"
-  ROOT_DEV="/dev/$(lsblk -no pkname "$ROOT_PART")"
-
-  PART_NUM="$(echo "$ROOT_PART" | grep -o "[[:digit:]]*$")"
-
-  if [ "$PART_NUM" -ne 2 ]; then
-    echo 1
-    exit
-  fi
-
-  LAST_PART_NUM=$(parted "$ROOT_DEV" -ms unit s p | tail -n 1 | cut -f 1 -d:)
-  if [ "$LAST_PART_NUM" -ne "$PART_NUM" ]; then
-    echo 1
-    exit
-  fi
-  echo 0
 }
 
 do_expand_rootfs() {
@@ -108,109 +82,30 @@ do_expand_rootfs() {
     return 0
   fi
 
-  LAST_PART_NUM=$(parted "$ROOT_DEV" -ms unit s p | tail -n 1 | cut -f 1 -d:)
-  # Actually we do know how to resize; we'll drop the last partition
-  # if [ $LAST_PART_NUM -ne $PART_NUM ]; then
-  #  whiptail --msgbox "$ROOT_PART is not the last partition. Don't know how to expand" 20 60 2
-  #  return 0
-  # fi
+  whiptail --scrolltext --msgbox "Current Disklayout:\n$(parted "$ROOT_DEV" -s unit MB p | tail -n+7)" 14 60 2
 
-  # Get the starting offset of the root partition
-  PART_START=$(parted "$ROOT_DEV" -ms unit s p | grep "^${PART_NUM}" | cut -f 2 -d: | sed 's/[^0-9]//g')
-  [ "$PART_START" ] || return 1
-  # Return value will likely be error for fdisk as it fails to reload the
-  # partition table because the root fs is mounted
+  if (whiptail --title "Resize root partition" --yes-button "Continue" --no-button "Cancel"  --yesno "Now turning off swap and resizing partition $ROOT_PART - continue?" 14 60) then
+    ;
+  else
+    whiptail --msgbox "Cancelled, no changes done." 10 60 2
+    return 0
+  fi
 
-
-  whiptail --scrolltext --msgbox "Current Disklayout:\n$(parted "$ROOT_DEV" -s unit MB p)\n\nNow turning off swap and resizing partition $ROOT_PART" 14 60 2
-  swapoff -a
-
+  whiptail --infobox "Disabling swap..." 14 60 1
+  swapoff -a  > /tmp/resize.log
+  whiptail --infobox "Dropping swap, changing root partition size..." 14 60 1
   parted --script -- "$ROOT_DEV" \
     rm 3 \
     resizepart 2 -256M \
-    mkpart primary linux-swap -256 -0
+    mkpart primary linux-swap -256 -0  >> /tmp/resize.log
 
-  sleep 5
+  whiptail --infobox "Root partition has been resized.\n\nNow enlarging filesystem and re-creating swap..." 14 60 2
+  mkswap /dev/hda3  >> /tmp/resize.log
+  swapon -a  >> /tmp/resize.log
+  resize2fs $ROOT_PART >> /tmp/resize.log
 
-  if [ "$INTERACTIVE" = True ]; then
-    whiptail --msgbox "Root partition has been resized.\n\nNow re-creating swap and enlarging filesystem" 10 60 2
-  fi
-
-  mkswap /dev/hda3 
-  swapon -a 
-
-  resize2fs $ROOT_PART
-  
-  if [ "$INTERACTIVE" = True ]; then
-    whiptail --scrolltext  --msgbox "All done. Root partition using full disk capacity now.\n$(parted "$ROOT_DEV" -s unit MB p)" 14 60 2
-  fi
-}
-
-set_config_var() {
-  lua - "$1" "$2" "$3" <<EOF > "$3.bak"
-local key=assert(arg[1])
-local value=assert(arg[2])
-local fn=assert(arg[3])
-local file=assert(io.open(fn))
-local made_change=false
-for line in file:lines() do
-  if line:match("^#?%s*"..key.."=.*$") then
-    line=key.."="..value
-    made_change=true
-  end
-  print(line)
-end
-
-if not made_change then
-  print(key.."="..value)
-end
-EOF
-mv "$3.bak" "$3"
-}
-
-clear_config_var() {
-  lua - "$1" "$2" <<EOF > "$2.bak"
-local key=assert(arg[1])
-local fn=assert(arg[2])
-local file=assert(io.open(fn))
-for line in file:lines() do
-  if line:match("^%s*"..key.."=.*$") then
-    line="#"..line
-  end
-  print(line)
-end
-EOF
-mv "$2.bak" "$2"
-}
-
-get_config_var() {
-  lua - "$1" "$2" <<EOF
-local key=assert(arg[1])
-local fn=assert(arg[2])
-local file=assert(io.open(fn))
-local found=false
-for line in file:lines() do
-  local val = line:match("^%s*"..key.."=(.*)$")
-  if (val ~= nil) then
-    print(val)
-    found=true
-    break
-  end
-end
-if not found then
-   print(0)
-end
-EOF
-}
-
-get_blanking() {
-    echo 0
-}
-
-do_blanking() {
-  if [ "$INTERACTIVE" = True ]; then
-    whiptail --msgbox "Not implemented yet." 20 60 1
-  fi
+  whiptail --scrolltext  --msgbox "All done. Root partition using full disk capacity now.\n$(parted "$ROOT_DEV" -s unit MB p | tail -n+7)\n\nPlease review logfile /tmp/resize.log" 14 60 2
+  whiptail --textbox /tmp/resize.log 14 60 2
 }
 
 is_number() {
@@ -361,68 +256,14 @@ do_ssh() {
   fi
 }
 
-get_vnc() {
-  if systemctl status vncserver-x11-serviced.service  | grep -q -w active; then
-    echo 0
-  else
-    echo 1
-  fi
-}
-
-do_vnc() {
-  DEFAULT=--defaultno
-  if [ $(get_vnc) -eq 0 ]; then
-    DEFAULT=
-  fi
-  if [ "$INTERACTIVE" = True ]; then
-    whiptail --yesno "Would you like the VNC Server to be enabled?" $DEFAULT 20 60 2
-    RET=$?
-  else
-    RET=$1
-  fi
-  if [ $RET -eq 0 ]; then
-    if is_installed realvnc-vnc-server || apt-get install realvnc-vnc-server; then
-      systemctl enable vncserver-x11-serviced.service &&
-      systemctl start vncserver-x11-serviced.service &&
-      STATUS=enabled
-    else
-      return 1
-    fi
-  elif [ $RET -eq 1 ]; then
-    if is_installed realvnc-vnc-server; then
-        systemctl disable vncserver-x11-serviced.service
-        systemctl stop vncserver-x11-serviced.service
-    fi
-    STATUS=disabled
-  else
-    return $RET
-  fi
-  if [ "$INTERACTIVE" = True ]; then
-    whiptail --msgbox "The VNC Server is $STATUS" 20 60 1
-  fi
-}
-
 disable_raspi_config_at_boot() {
   if [ -e /etc/profile.d/jornada-config.sh ]; then
     rm -f /etc/profile.d/jornada-config.sh
   fi
 }
 
-get_boot_cli() {
-  if systemctl get-default | grep -q multi-user ; then
-    echo 0
-  else
-    echo 1
-  fi
-}
-
-get_autologin() {
-  if [ $(get_boot_cli) -eq 0 ]; then
-    # booting to CLI
-    echo 0
-  else
-    echo 1
-  fi
+enable_raspi_config_at_boot() {
+  echo "/opt/jornada-config/jornada-config" > /etc/profile.d/jornada-config.sh
 }
 
 do_boot_behaviour() {
@@ -447,7 +288,6 @@ do_boot_behaviour() {
         ;;
       A*)
         cat /opt/jornada-config/scripts/inittab.auto | sed -e s/AUTOUSER/$USER/g > /etc/inittab
-        # cp -f /opt/jornada-config/scripts/inittab.auto /etc/inittab
         whiptail --msgbox "System set to automatic login for $USER." 14 60 2
         ;;
       D*)
@@ -469,83 +309,6 @@ do_boot_behaviour() {
   fi
 }
 
-get_boot_wait() {
-  if test -e /etc/systemd/system/dhcpcd.service.d/wait.conf; then
-    echo 0
-  else
-    echo 1
-  fi
-}
-
-do_boot_wait() {
-  DEFAULT=--defaultno
-  if [ $(get_boot_wait) -eq 0 ]; then
-    DEFAULT=
-  fi
-  if [ "$INTERACTIVE" = True ]; then
-    whiptail --yesno "Would you like boot to wait until a network connection is established?" $DEFAULT 20 60 2
-    RET=$?
-  else
-    RET=$1
-  fi
-  if [ $RET -eq 0 ]; then
-    mkdir -p /etc/systemd/system/dhcpcd.service.d/
-    cat > /etc/systemd/system/dhcpcd.service.d/wait.conf << EOF
-[Service]
-ExecStart=
-ExecStart=/usr/lib/dhcpcd5/dhcpcd -q -w
-EOF
-    STATUS=enabled
-  elif [ $RET -eq 1 ]; then
-    rm -f /etc/systemd/system/dhcpcd.service.d/wait.conf
-    STATUS=disabled
-  else
-    return $RET
-  fi
-  if [ "$INTERACTIVE" = True ]; then
-    whiptail --msgbox "Waiting for network on boot is $STATUS" 20 60 1
-  fi
-}
-
-get_net_names() {
-  if grep -q "net.ifnames=0" $CMDLINE || [ "$(readlink -f /etc/systemd/network/99-default.link)" = "/dev/null" ] ; then
-    echo 1
-  else
-    echo 0
-  fi
-}
-
-do_net_names () {
-  DEFAULT=--defaultno
-  CURRENT=0
-  if [ $(get_net_names) -eq 0 ]; then
-    DEFAULT=
-    CURRENT=1
-  fi
-  if [ "$INTERACTIVE" = True ]; then
-    whiptail --yesno "Would you like to enable predictable network interface names?" $DEFAULT 20 60 2
-    RET=$?
-  else
-    RET=$1
-  fi
-  if [ $RET -eq $CURRENT ]; then
-    ASK_TO_REBOOT=1
-  fi
-  if [ $RET -eq 0 ]; then
-    sed -i $CMDLINE -e "s/net.ifnames=0 *//"
-    rm -f /etc/systemd/network/99-default.link
-    STATUS=enabled
-  elif [ $RET -eq 1 ]; then
-    ln -sf /dev/null /etc/systemd/network/99-default.link
-    STATUS=disabled
-  else
-    return $RET
-  fi
-  if [ "$INTERACTIVE" = True ]; then
-    whiptail --msgbox "Predictable network interface names are $STATUS" 20 60 1
-  fi
- }
-
 do_update() {
   whiptail --infobox "Please standby while updating..." 10 60 1
   (cd /opt/jornada-config && git pull)
@@ -555,108 +318,178 @@ do_update() {
   exec /opt/jornada-config/jornada-config
 }
 
-list_wlan_interfaces() {
-  for dir in /sys/class/net/*/wireless; do
-    if [ -d "$dir" ]; then
-      basename "$(dirname "$dir")"
-    fi
-  done
+get_wifi_available() {
+  TECH=`connmanctl technologies`
+  if (echo "$TECH" | grep -q WiFi) then
+    return 1
+  else
+    return 0
+  fi
 }
 
-do_wifi_ssid_passphrase() {
-  RET=0
-  IFACE_LIST="$(list_wlan_interfaces)"
-  IFACE="$(echo "$IFACE_LIST" | head -n 1)"
+get_wifi_active() {
+  TECH=`connmanctl technologies`
+  if (echo "$TECH" | grep -q "Powered = True") then
+    return 1
+  else
+    return 0
+  fi
+}
 
-  if [ -z "$IFACE" ]; then
-    if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "No wireless interface found" 20 60
-    fi
+get_wifi_connected() {
+  TECH=`connmanctl technologies`
+  if (echo "$TECH" | grep -q "Connected = True") then
+    return 1
+  else
+    return 0
+  fi
+}
+
+do_enable_wifi() {
+  connmanctl enable wifi
+}
+
+do_disable_wifi() {
+  connmanctl disable wifi
+}
+
+do_scan_networks() {
+  connmanctl scan wifi
+}
+
+do_list_wlan_networks() {
+  connmanctl services
+}
+
+do_connect_wifi() {
+  connmanctl connect $1
+}
+
+do_switch_wifi_power() {
+  if (whiptail --title "Wifi Status" --yes-button "Wifi On" --no-button "Wifi Off"  --yesno "Please select On or Off to switich Wifi state" 10 60) then
+    whiptail --infobox "Enabling Wifi..." 10 60 1
+    do_enable_wifi
+  else
+    whiptail --infobox "Disabling Wifi..." 10 60 1
+    do_disable_wifi
+  fi
+}
+
+do_switch_wifi_net() {
+  if (get_wifi_available) then
+    ;
+  else
+    whiptail --msgbox "Wifi not available, please check network card" 14 60
     return 1
   fi
 
-  if ! wpa_cli -i "$IFACE" status > /dev/null 2>&1; then
-    if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "Could not communicate with wpa_supplicant" 20 60
-    fi
-    return 1
-  fi
-
-  if [ "$INTERACTIVE" = True ] && [ -z "$(get_wifi_country)" ]; then
-    do_wifi_country
-  fi
-
-  SSID="$1"
-  while [ -z "$SSID" ] && [ "$INTERACTIVE" = True ]; do
-    SSID=$(whiptail --inputbox "Please enter SSID" 20 60 3>&1 1>&2 2>&3)
-    if [ $? -ne 0 ]; then
-      return 0
-    elif [ -z "$SSID" ]; then
-      whiptail --msgbox "SSID cannot be empty. Please try again." 20 60
-    fi
-  done
-
-  PASSPHRASE="$2"
-  while [ "$INTERACTIVE" = True ]; do
-    PASSPHRASE=$(whiptail --passwordbox "Please enter passphrase. Leave it empty if none." 20 60 3>&1 1>&2 2>&3)
-    if [ $? -ne 0 ]; then
-      return 0
+  if (get_wifi_active) then
+    ;
+  else
+    whiptail --infobox "Wifi not active, trying to power on ..." 14 60
+    do_enable_wifi
+    if (get_wifi_active) then
+      ;
     else
-      break
-    fi
-  done
-
-  # Escape special characters for embedding in regex below
-  local ssid="$(echo "$SSID" \
-   | sed 's;\\;\\\\;g' \
-   | sed -e 's;\.;\\\.;g' \
-         -e 's;\*;\\\*;g' \
-         -e 's;\+;\\\+;g' \
-         -e 's;\?;\\\?;g' \
-         -e 's;\^;\\\^;g' \
-         -e 's;\$;\\\$;g' \
-         -e 's;\/;\\\/;g' \
-         -e 's;\[;\\\[;g' \
-         -e 's;\];\\\];g' \
-         -e 's;{;\\{;g'   \
-         -e 's;};\\};g'   \
-         -e 's;(;\\(;g'   \
-         -e 's;);\\);g'   \
-         -e 's;";\\\\\";g')"
-
-  wpa_cli -i "$IFACE" list_networks \
-   | tail -n +2 | cut -f -2 | grep -P "\t$ssid$" | cut -f1 \
-   | while read ID; do
-    wpa_cli -i "$IFACE" remove_network "$ID" > /dev/null 2>&1
-  done
-
-  ID="$(wpa_cli -i "$IFACE" add_network)"
-  wpa_cli -i "$IFACE" set_network "$ID" ssid "\"$SSID\"" 2>&1 | grep -q "OK"
-  RET=$((RET + $?))
-
-  if [ -z "$PASSPHRASE" ]; then
-    wpa_cli -i "$IFACE" set_network "$ID" key_mgmt NONE 2>&1 | grep -q "OK"
-    RET=$((RET + $?))
-  else
-    wpa_cli -i "$IFACE" set_network "$ID" psk "\"$PASSPHRASE\"" 2>&1 | grep -q "OK"
-    RET=$((RET + $?))
+      whiptail --msgbox "Could not activate WiFi, aborting." 14 60
+      return 0
   fi
 
-  if [ $RET -eq 0 ]; then
-    wpa_cli -i "$IFACE" enable_network "$ID" > /dev/null 2>&1
+  NETWORKS=`ls /var/lib/connman/wifi* | awk '{print $1 " WiFi OFF"}'`
+  echo $NETWORKS
+  NETWORK_ID=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --radiolist "Select WiFi network to connect" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
+	    $NETWORKS \
+      3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    whiptail --infobox "Connecting to network $NETWORK_NAME" 14 60 1
+    connmanctl connect $NETWORK_ID
   else
-    wpa_cli -i "$IFACE" remove_network "$ID" > /dev/null 2>&1
-    if [ "$INTERACTIVE" = True ]; then
-      whiptail --msgbox "Failed to set SSID or passphrase" 20 60
+    whiptail --msgbox "Cancelled." 14 60 1
+    return 0
+  fi
+
+  return 0
+}
+
+do_wifi_setup() {
+  if (get_wifi_available) then
+    ;
+  else
+    whiptail --msgbox "Wifi not available, please check network card" 14 60
+    return 1
+  fi
+
+  if (get_wifi_active) then
+    ;
+  else
+    whiptail --infobox "Wifi not active, trying to power on ..." 14 60
+    do_enable_wifi
+    if (get_wifi_active) then
+      ;
+    else
+      whiptail --msgbox "Could not activate WiFi, aborting." 14 60
+      return 0
+  fi
+
+  whiptail --infobox "Scanning wifi networks ..." 14 60
+  do_scan_networks
+  NETWORKS=`connmanctl services | cut -c5- | awk '{print $1 " " $2 " OFF"}'`
+  echo $NETWORKS
+  NETWORK_NAME=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --radiolist "Select WiFi network to configure" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
+	    $NETWORKS \
+      3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    whiptail --msgbox "Using network $NETWORK_NAME" 14 60 1
+  else
+    whiptail --msgbox "Cancelled." 14 60 1
+    return 0
+  fi
+
+  NETWORK_DATA=$(echo $NETWORKS | grep $NETWORK_NAME)
+  NETWORK_ID=$($NETWORK_DATA | cut -f2 -d' ') 
+  NETWORK_SSID=$($NETWORK_ID | cut -f2 -d'_') 
+  echo $NETWORK_DATA
+  echo $NETWORK_ID
+  echo $NETWORK_SSID
+
+  if [ -f /var/lib/connman/$NETWORK_ID ]; then
+    whiptail --yesno  "Network $NETWORK_NAME already configured, do you want to reconfigure?" 14 60 1
+    if [ $? -eq 0 ]; then
+      whiptail --infobox "Deleting previous configuration ..." 14 60 1
+      rm -rf /var/lib/connman/$NETWORK_ID
+    else
+      whiptail --infobox "Cancelled." 14 60 1
+      return 0
     fi
   fi
-  wpa_cli -i "$IFACE" save_config > /dev/null 2>&1
 
-  echo "$IFACE_LIST" | while read IFACE; do
-    wpa_cli -i "$IFACE" reconfigure > /dev/null 2>&1
-  done
+  PASSPHRASE=$(whiptail --inputbox "Please enter passphrase for $NETWORK_NAME. Leave it empty if none." 14 60 3>&1 1>&2 2>&3)
+  if [ $? -ne 0 ]; then
+    return 0
+  else
+    break
+  fi
 
-  return $RET
+  # Write connmanctl config file
+  mkdir /var/lib/connman/$NETWORK_ID
+  cfgfile="/var/lib/connman/$NETWORK_ID/settings"
+  tstamp=`date --utc +%FT%T.%6NZ`
+  touch $cfgfile
+  echo "[$NETWORK_ID]" >> $cfgfile
+  echo "Name=$NETWORK_NAME" >> $cfgfile
+  echo "SSID=$NETWORK_SSID" >> $cfgfile
+  echo "Favorite=True" >> $cfgfile
+  echo "AutoConnect=True" >> $cfgfile
+  echo "Modified=$tstamp" >> $cfgfile
+  echo "Passphrase=$PASSPHRASE" >> $cfgfile
+  echo "IPv4.method=DHCP" >> $cfgfile
+  echo "IPv6.method=off" >> $cfgfile
+  echo "IPv6.privacy=disabled" >> $cfgfile
+
+  whiptail --infobox "Configuration file written to $cfgfile, trying to connect now..." 14 60
+  connmanctl connect $NETWORK_ID
+
+  return 0
 }
 
 do_finish() {
@@ -674,78 +507,6 @@ do_finish() {
 do_nothing() {
   if [ "$INTERACTIVE" = True ]; then
     whiptail --msgbox "This is not yet implemented" 20 60
-  fi
-}
-
-# $1 = filename, $2 = key name
-get_json_string_val() {
-  sed -n -e "s/^[[:space:]]*\"$2\"[[:space:]]*:[[:space:]]*\"\(.*\)\"[[:space:]]*,$/\1/p" $1
-}
-
-is_uname_current() {
-  test -d "/lib/modules/$(uname -r)"
-  return $?
-}
-
-get_proxy() {
-  SCHEME="$1"
-  VAR_NAME="${SCHEME}_proxy"
-  if [ -f /etc/profile.d/proxy.sh ]; then
-    # shellcheck disable=SC1091
-    . /etc/profile.d/proxy.sh
-  fi
-  eval "echo \$$VAR_NAME"
-}
-
-do_proxy() {
-  SCHEMES="$1"
-  ADDRESS="$2"
-  if [ "$SCHEMES" = "all" ]; then
-    CURRENT="$(get_proxy http)"
-    SCHEMES="http https ftp rsync"
-  else
-    CURRENT="$(get_proxy "$SCHEMES")"
-  fi
-  if [ "$INTERACTIVE" = True ]; then
-    if [ "$SCHEMES" = "no" ]; then
-      STRING="Please enter a comma separated list of addresses that should be excluded from using proxy servers.\\nEg: localhost,127.0.0.1,localaddress,.localdomain.com"
-    else
-      STRING="Please enter proxy address.\\nEg: http://user:pass@proxy:8080"
-    fi
-    if ! ADDRESS="$(whiptail --inputbox "$STRING"  20 60 "$CURRENT" 3>&1 1>&2 2>&3)"; then
-      return 0
-    fi
-  fi
-  for SCHEME in $SCHEMES; do
-    unset "${SCHEME}_proxy"
-    CURRENT="$(get_proxy "$SCHEME")"
-    if [ "$CURRENT" != "$ADDRESS" ]; then
-      ASK_TO_REBOOT=1
-    fi
-    if [ -f /etc/profile.d/proxy.sh ]; then
-      sed -i "/^export ${SCHEME}_/Id" /etc/profile.d/proxy.sh
-    fi
-    if [ "${SCHEME#*http}" != "$SCHEME" ]; then
-      if [ -f /etc/apt/apt.conf.d/01proxy ]; then
-        sed -i "/::${SCHEME}::Proxy/d" /etc/apt/apt.conf.d/01proxy
-      fi
-    fi
-    if [ -z "$ADDRESS" ]; then
-      STATUS=cleared
-      continue
-    fi
-    STATUS=updated
-    SCHEME_UPPER="$(echo "$SCHEME" | tr '[:lower:]' '[:upper:]')"
-    echo "export ${SCHEME_UPPER}_PROXY=\"$ADDRESS\"" >> /etc/profile.d/proxy.sh
-    if [ "$SCHEME" != "rsync" ]; then
-      echo "export ${SCHEME}_proxy=\"$ADDRESS\"" >> /etc/profile.d/proxy.sh
-    fi
-    if [ "${SCHEME#*http}" != "$SCHEME" ]; then
-      echo "Acquire::$SCHEME::Proxy \"$ADDRESS\";"  >> /etc/apt/apt.conf.d/01proxy
-    fi
-  done
-  if [ "$INTERACTIVE" = True ]; then
-    whiptail --msgbox "Proxy settings $STATUS" 20 60 1
   fi
 }
 
@@ -773,10 +534,10 @@ do_lcd_setup() {
     CONTRAST=`cat /sys/devices/platform/jornada_lcd/lcd/s1d13xxxfb/contrast`
     
     FUN=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --menu "LCD Setup" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "B (*) +" "Brightness increase ($BRIGHT)" \
-      "V (*) -" "           decrease" \
-      "C (#) +" "Contrast increase ($CONTRAST)" \
-      "X (#) -" "         decrease" \
+      "B  (*) >>" "Brightness increase ($BRIGHT)" \
+      "V  (*) <<" "           decrease" \
+      "C  (#) >>" "Contrast increase ($CONTRAST)" \
+      "X  (#) <<" "         decrease" \
       "S Save" "Save settings to ${USER}s profile" \
       3>&1 1>&2 2>&3)
     RET=$?
@@ -788,21 +549,11 @@ do_lcd_setup() {
         V\ *) BRIGHT=$(($BRIGHT-5)) && set_brightness $BRIGHT ;;
         C\ *) CONTRAST=$(($CONTRAST+5)) &&  set_contrast $CONTRAST ;;
         X\ *) CONTRAST=$(($CONTRAST-5)) &&  set_contrast $CONTRAST ;;
-        S\ *) do_save_lcd_setup ;;
+        S\ *) do_nothing ;;
         *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
       esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
     fi
   done
- }
-
-do_switch_wifi() {
-  if (whiptail --title "Wifi Status" --yes-button "Wifi On" --no-button "Wifi Off"  --yesno "Please select On or Off to switich Wifi state" 10 60) then
-    whiptail --infobox "Enabling Wifi..." 10 60 1
-    connmanctl enable wifi
-  else
-    whiptail --infobox "Disabling Wifi..." 10 60 1
-    connmanctl disable wifi
-  fi
 }
 
 do_poweroff() {
@@ -868,6 +619,11 @@ do
   --asroot)
     USER=root
     ;;
+  --install)
+    enable_raspi_config_at_boot
+    printf "Config utility installed at next boot"
+    exit 0;
+    ;;
   nonint)
     INTERACTIVE=False
     "$@"
@@ -887,21 +643,19 @@ fi
 
 do_system_menu() {
   FUN=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --menu "System Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-    "S1 Wireless LAN" "Enter SSID and passphrase" \
+    "S1 WiFi ..." "Configure WiFi network" \
     "S3 Password" "Change password for the '$USER' user" \
     "S4 Hostname" "Set name for this computer on a network" \
-    "S5 Network at Boot" "Select wait for network connection on boot" \
-    "S6 Add User" "Add a regular user account" \
+    "S6 Add User ..." "Add a regular user account" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
     return 0
   elif [ $RET -eq 0 ]; then
     case "$FUN" in
-      S1\ *) do_nothing ;;
+      S1\ *) do_wifi_setup ;;
       S3\ *) do_change_pass ;;
       S4\ *) do_hostname ;;
-      S5\ *) do_boot_wait ;;
       S7\ *) do_add_user ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
@@ -910,16 +664,14 @@ do_system_menu() {
 
 do_interface_menu() {
   FUN=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --menu "Interfacing Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-    "P2 SSH" "Enable/disable remote command line access using SSH" \
-    "P3 VNC" "Enable/disable graphical remote access using RealVNC" \
+    "S SSH" "Enable/disable remote command line access using SSH" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
     return 0
   elif [ $RET -eq 0 ]; then
     case "$FUN" in
-      P2\ *) do_ssh ;;
-      P3\ *) do_nothing ;;
+      S\ *) do_ssh ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
@@ -927,14 +679,14 @@ do_interface_menu() {
 
 do_performance_menu() {
   FUN=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --menu "Performance Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-    "P1 Overclock" "Configure CPU clock" \
+    "O Overclock" "Configure CPU clock" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
     return 0
   elif [ $RET -eq 0 ]; then
     case "$FUN" in
-      P1\ *) do_nothing ;;
+      O\ *) do_nothing ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
@@ -942,18 +694,18 @@ do_performance_menu() {
 
 do_internationalisation_menu() {
   FUN=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --menu "Localisation Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-    "L1 Locale" "Configure language and regional settings" \
-    "L2 Timezone" "Configure time zone" \
-    "L3 Keyboard" "Set keyboard layout to match your keyboard" \
+    "L Locale ..." "Configure language and regional settings" \
+    "T Timezone ..." "Configure time zone" \
+    "K Keyboard" "Set keyboard layout to match your keyboard" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
     return 0
   elif [ $RET -eq 0 ]; then
     case "$FUN" in
-      L1\ *) do_change_locale ;;
-      L2\ *) do_change_timezone ;;
-      L3\ *) do_change_keyboard ;;
+      L\ *) do_change_locale ;;
+      T\ *) do_change_timezone ;;
+      K\ *) do_change_keyboard ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
@@ -962,7 +714,7 @@ do_internationalisation_menu() {
 do_advanced_menu() {
   if is_jornada ; then
     FUN=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "A1 Expand Filesystem" "Ensures that all of the SD card is available" \
+      "E Expand Filesystem" "Ensures that all of the SD card is available" \
       3>&1 1>&2 2>&3)
   fi
   RET=$?
@@ -970,7 +722,7 @@ do_advanced_menu() {
     return 0
   elif [ $RET -eq 0 ]; then
     case "$FUN" in
-      A1\ *) do_expand_rootfs ;;
+      E\ *) do_expand_rootfs ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
   fi
@@ -985,22 +737,23 @@ if [ "$INTERACTIVE" = True ]; then
    while true; do
     if [ "$USER" = "root" ]; then
       FUN=$(whiptail --title "$TITLE, SYSTEM options ($USER)" --backtitle="$BTITLE" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-        "A1 System Options" "Configure system settings" \
-        "A3 Interface Options" "Configure connections to peripherals" \
-        "A5 Localisation Options" "Configure language and regional settings" \
-        "A6 Advanced Options" "Configure advanced settings" \
-        "A8 Update" "Update this tool to the latest version" \
-        "A9 About jornada-config" "Information about this tool" \
+        "S System ..." "Configure system settings" \
+        "I Interfaces ..." "Configure external interfaces (SSH, ...)" \
+        "L Localisation ..." "Configure language, regional and keyboard settings" \
+        "V Advanced ..." "Configure advanced settings" \
+        "U Update" "Update this tool to the latest version" \
+        "A About" "Information about this tool" \
         3>&1 1>&2 2>&3)
     else
       FUN=$(whiptail --title "$TITLE, USER options ($USER)" --backtitle="$BTITLE" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-        "U1 Wifi Power" "Turn Wifi on/off" \
-        "U2 Wifi ..." "Manage Wifi Networks" \
-        "U3 LCD ..." "Set the screen brightness and contrast" \
-        "U4 Startup ..." "System Startup Options" \
-        "U5 Shutdown" "Poweroff the machine" \
-        "U6 Password" "Change password for the '$USER' user" \
-        "A9 About" "Information about this tool" \
+        "W WiFi Power" "Turn Wifi on/off" \
+        "E WiFi Connect" "Switch WiFi network" \
+        "R WiFi ..." "Configure WiFi networks" \
+        "L LCD ..." "Set the screen brightness and contrast" \
+        "S Startup ..." "System Startup Options" \
+        "0 Shutdown" "Poweroff the machine" \
+        "P Password" "Change password for the '$USER' user" \
+        "A About" "Information about this tool" \
         3>&1 1>&2 2>&3)
     fi
     RET=$?
@@ -1008,19 +761,19 @@ if [ "$INTERACTIVE" = True ]; then
       do_finish
     elif [ $RET -eq 0 ]; then
       case "$FUN" in
-        A1\ *) do_system_menu ;;
-        A3\ *) do_interface_menu ;;
-        A4\ *) do_performance_menu ;;
-        A5\ *) do_internationalisation_menu ;;
-        A6\ *) do_advanced_menu ;;
-        A8\ *) do_update ;;
-        A9\ *) do_about ;;
-        U1\ *) do_switch_wifi ;;
-        U2\ *) do_nothing ;;
-        U3\ *) do_lcd_setup ;;
-        U4\ *) do_boot_behaviour ;;
-        U5\ *) do_poweroff ;;
-        U6\ *) do_change_pass ;;
+        S\ *) do_system_menu ;;
+        I\ *) do_interface_menu ;;
+        L\ *) do_internationalisation_menu ;;
+        V\ *) do_advanced_menu ;;
+        U\ *) do_update ;;
+        A\ *) do_about ;;
+        W\ *) do_switch_wifi_power ;;
+        E\ *) do_switch_wifi_net ;;
+        R\ *) do_wifi_setup ;;
+        L\ *) do_lcd_setup ;;
+        S\ *) do_boot_behaviour ;;
+        0\ *) do_poweroff ;;
+        P\ *) do_change_pass ;;
         *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
       esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
     else
