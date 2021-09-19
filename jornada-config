@@ -462,7 +462,7 @@ do_wifi_setup() {
 
   NETWORK_DATA=$(cat /tmp/services | grep -w $NETWORK_NAME)
   NETWORK_ID=$(echo $NETWORK_DATA | cut -f2 -d' ') 
-  NETWORK_SSID=$(echo $NETWORK_ID | cut -f2 -d'_') 
+  NETWORK_SSID=$(echo $NETWORK_ID | cut -f3 -d'_') 
   
   whiptail --msgbox "selected:\ndata:$NETWORK_DATA\nid:$NETWORK_ID\nssid:$NETWORK_SSID\nname:$NETWORK_NAME" 14 60 1
   
@@ -490,11 +490,11 @@ do_wifi_setup() {
   echo "[$NETWORK_ID]" >> $cfgfile
   echo "Name=$NETWORK_NAME" >> $cfgfile
   echo "SSID=$NETWORK_SSID" >> $cfgfile
-  echo "Favorite=True" >> $cfgfile
-  echo "AutoConnect=True" >> $cfgfile
+  echo "Favorite=true" >> $cfgfile
+  echo "AutoConnect=true" >> $cfgfile
   echo "Modified=$tstamp" >> $cfgfile
   echo "Passphrase=$PASSPHRASE" >> $cfgfile
-  echo "IPv4.method=DHCP" >> $cfgfile
+  echo "IPv4.method=dhcp" >> $cfgfile
   echo "IPv6.method=off" >> $cfgfile
   echo "IPv6.privacy=disabled" >> $cfgfile
 
