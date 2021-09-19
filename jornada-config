@@ -395,6 +395,7 @@ do_switch_wifi_net() {
 
   NETWORKS=`ls /var/lib/connman/wifi* | awk '{print $1 " WiFi OFF "}'`
   echo $NETWORKS
+  sleep 5
   NETWORK_ID=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --radiolist "Select WiFi network to connect" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
 	    $NETWORKS \
       3>&1 1>&2 2>&3)
