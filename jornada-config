@@ -384,7 +384,7 @@ do_switch_wifi_net() {
   fi
 
   if (get_wifi_active) then
-    ;
+    echo ""
   else
     whiptail --infobox "Wifi not active, trying to power on ..." 14 60
     do_enable_wifi
