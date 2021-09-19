@@ -498,9 +498,11 @@ do_wifi_setup() {
   echo "IPv6.method=off" >> $cfgfile
   echo "IPv6.privacy=disabled" >> $cfgfile
 
-  whiptail --infobox "Configuration file written to $cfgfile, trying to connect now..." 14 60
-  connmanctl connect $NETWORK_ID
-
+  whiptail --yesno "Configuration file written to $cfgfile\n\nTry to connect?" 14 60 1
+  if [ $? -eq 0 ]; then
+    whiptail --infobox "Connecting to $NETWORK_NAME ..." 14 60 1
+    connmanctl connect $NETWORK_ID
+  fi
   return 0
 }
 
