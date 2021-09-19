@@ -447,7 +447,8 @@ do_wifi_setup() {
 
   whiptail --infobox "Scanning wifi networks ..." 14 60
   do_scan_networks
-  NETWORKS=`connmanctl services | cut -c5- | awk '{print $1 " " $2 " OFF\n"}'`
+  connmanctl services > /tmp/services
+  NETWORKS=`cat /tmp/services | cut -c5- | awk '{print $1 " " $2 " OFF"}'`
   echo $NETWORKS
   NETWORK_NAME=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --radiolist "Select WiFi network to configure" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT \
 	    $NETWORKS \
@@ -459,13 +460,10 @@ do_wifi_setup() {
     return 0
   fi
 
-  NETWORK_DATA=$(echo $NETWORKS | grep -w $NETWORK_NAME)
+  NETWORK_DATA=$(cat /tmp/services | grep -w $NETWORK_NAME)
   NETWORK_ID=$(echo $NETWORK_DATA | cut -f2 -d' ') 
   NETWORK_SSID=$(echo $NETWORK_ID | cut -f2 -d'_') 
   
-  echo $NETWORK_DATA
-  echo $NETWORK_ID
-  echo $NETWORK_SSID
   whiptail --msgbox "selected:\ndata:$NETWORK_DATA\nid:$NETWORK_ID\nssid:$NETWORK_SSID\nname:$NETWORK_NAME" 14 60 1
   
   if [ -f /var/lib/connman/$NETWORK_ID/settings ]; then
