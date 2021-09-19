@@ -408,8 +408,6 @@ do_switch_wifi_net() {
     fi
   done
 
-  whiptail --msgbox "$NLIST" 14 60 1 
-
   if [ -z "$NLIST" ]; then
     whiptail --msgbox "No networks configured yet." 14 60 1 
     retun 1
@@ -420,8 +418,8 @@ do_switch_wifi_net() {
       3>&1 1>&2 2>&3)
   if [ $? -eq 0 ]; then
     whiptail --infobox "Connecting to network $NETWORK_NAME" 14 60 1
-    connmanctl connect $NETWORK_ID
-    sleep 5
+    message=$(connmanctl connect $NETWORK_ID)
+    whiptail --msgbox "$message" 14 60 1
   else
     whiptail --msgbox "Cancelled." 14 60 1
     return 0
@@ -431,23 +429,20 @@ do_switch_wifi_net() {
 }
 
 do_wifi_setup() {
-  if (get_wifi_available) then
-    echo ""
-  else
+  get_wifi_available
+  if [ $? -eq 0 ]; then
     whiptail --msgbox "Wifi not available, please check network card" 14 60
     return 1
   fi
 
-  if (get_wifi_active) then
-    echo ""
-  else
+  get_wifi_active
+  if [ $? -eq 0 ]; then
     whiptail --infobox "Wifi not active, trying to power on ..." 14 60
     do_enable_wifi
-    if (get_wifi_active) then
-      echo ""
-    else
+    get_wifi_active
+    if [ $? -eq 0 ]; then
       whiptail --msgbox "Could not activate WiFi, aborting." 14 60
-      return 0
+      return 1
     fi
   fi
 
@@ -459,7 +454,7 @@ do_wifi_setup() {
 	    $NETWORKS \
       3>&1 1>&2 2>&3)
   if [ $? -eq 0 ]; then
-    whiptail --msgbox "Using network $NETWORK_NAME" 14 60 1
+    whiptail --infobox "Using network $NETWORK_NAME" 14 60 1
   else
     whiptail --msgbox "Cancelled." 14 60 1
     return 0
@@ -472,7 +467,7 @@ do_wifi_setup() {
   echo $NETWORK_ID
   echo $NETWORK_SSID
 
-  if [ -f /var/lib/connman/$NETWORK_ID ]; then
+  if [ -f /var/lib/connman/$NETWORK_ID/settings ]; then
     whiptail --yesno  "Network $NETWORK_NAME already configured, do you want to reconfigure?" 14 60 1
     if [ $? -eq 0 ]; then
       whiptail --infobox "Deleting previous configuration ..." 14 60 1
