@@ -376,23 +376,20 @@ do_switch_wifi_power() {
 }
 
 do_switch_wifi_net() {
-  if (get_wifi_available) then
-    echo ""
-  else
+  get_wifi_available
+  if [ $? -eq 0 ]; then
     whiptail --msgbox "Wifi not available, please check network card" 14 60
     return 1
   fi
 
-  if (get_wifi_active) then
-    echo ""
-  else
+  get_wifi_active
+  if [ $? -eq 0 ]; then
     whiptail --infobox "Wifi not active, trying to power on ..." 14 60
     do_enable_wifi
-    if (get_wifi_active) then
-      echo ""
-    else
+    get_wifi_active
+    if [ $? -eq 0 ]; then
       whiptail --msgbox "Could not activate WiFi, aborting." 14 60
-      return 0
+      return 1
     fi
   fi
 
