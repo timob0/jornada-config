@@ -120,27 +120,27 @@ is_number() {
 }
 
 do_change_pass() {
-  whiptail --msgbox "You will now be asked to enter a new password for the $USER user" 20 60 1
+  whiptail --msgbox "You will now be asked to enter a new password for the $USER user" 14 60 1
   passwd $USER &&
-  whiptail --msgbox "Password changed successfully" 20 60 1
+  whiptail --msgbox "Password changed successfully" 14 60 1
 }
 
 do_add_user() {
   NEWUSER="$1"
   while [ -z "$NEWUSER" ] && [ "$INTERACTIVE" = True ]; do
-    NEWUSER=$(whiptail --inputbox "Please enter new user name" 20 60 3>&1 1>&2 2>&3)
+    NEWUSER=$(whiptail --inputbox "Please enter new user name" 14 60 3>&1 1>&2 2>&3)
     if [ $? -ne 0 ]; then
       return 0
     elif [ -z "$NEWUSER" ]; then
-      whiptail --msgbox "Please enter a non empty user name." 20 60
+      whiptail --msgbox "Please enter a non empty user name." 14 60
     fi
   done
   # add the NEWUSER
   useradd -G sudo -m -s /bin/bash $NEWUSER
 
-  whiptail --msgbox "You will now be asked to enter a new password for the $NEWUSER user" 20 60 1
+  whiptail --msgbox "You will now be asked to enter a new password for the $NEWUSER user" 14 60 1
   passwd $NEWUSER &&
-  whiptail --msgbox "User created successfully." 20 60 1
+  whiptail --msgbox "User created successfully." 14 60 1
 }
 
 
