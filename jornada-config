@@ -781,8 +781,8 @@ if [ "$INTERACTIVE" = True ]; then
         "W2 WiFi Connect" "Switch WiFi network" \
         "W3 WiFi ..." "Configure WiFi networks" \
         "L1 LCD ..." "Set the screen brightness and contrast" \
-        "S1 Startup ..." "System Startup Options" \
-        "S2 Shutdown" "Poweroff the machine" \
+        "B1 Startup ..." "System Startup Options" \
+        "B2 Shutdown" "Poweroff the machine" \
         "P1 Password" "Change password for the '$USER' user" \
         "A1 About" "Information about this tool" \
         3>&1 1>&2 2>&3)
@@ -802,8 +802,8 @@ if [ "$INTERACTIVE" = True ]; then
         W2\ *) do_switch_wifi_net ;;
         W3\ *) do_wifi_setup ;;
         L1\ *) do_lcd_setup ;;
-        S1\ *) do_boot_behaviour ;;
-        S2\ *) do_poweroff ;;
+        B1\ *) do_boot_behaviour ;;
+        B2\ *) do_poweroff ;;
         P1\ *) do_change_pass ;;
         *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
       esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
