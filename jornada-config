@@ -397,18 +397,29 @@ do_switch_wifi_net() {
     fi
   fi
 
-  NETWORKS=`ls /var/lib/connman/ | grep wifi`
+  connmanctl services > /tmp/services
+  CONNECTED=`cat /tmp/services | grep '*' | cut -c26-`
+  AVAILABLE=`cat /tmp/services | cut -c26-`
+
+  echo a $AVAILABLE
+  echo c $CONNECTED
+
+  NETWORKS=`ls /var/lib/connman/ | grep wifi | sort -t _ -k 3`
   NLIST=""
-  state="ON"
+  state="OFF"
   for n in $NETWORKS
   do
     if [ -f /var/lib/connman/$n/settings ]; then
       name=`cat /var/lib/connman/$n/settings | grep Name | cut -f2 -d=`
-      NLIST="$NLIST $n $name $state"
-    fi
-    # toggle state so that first one is selected
-    if [ $state="ON"]; then
-      state="OFF"
+      
+      # find which one we're connected to
+      if [ "$n"="$CONNECTED" ]; then
+        state="ON"
+      fi
+
+      if (echo "$AVAILABLE" | grep -q "$n") then
+        NLIST="$NLIST $n $name $state"
+      fi
     fi
   done
 
@@ -421,12 +432,16 @@ do_switch_wifi_net() {
 	    $NLIST \
       3>&1 1>&2 2>&3)
   if [ $? -eq 0 ]; then
-    whiptail --infobox "Connecting to network $NETWORK_NAME" 14 60 1
+    echo $NETWORK_ID
+    echo $NETWORK_NAME_
+    whiptail --infobox "Connecting to network $NETWORK_NAME ($NETWORK_ID)" 14 60 1
     connmanctl connect $NETWORK_ID
   else
     whiptail --msgbox "Cancelled." 14 60 1
     return 0
   fi
+
+  sleep 5
 
   return 0
 }
@@ -760,23 +775,23 @@ if [ "$INTERACTIVE" = True ]; then
    while true; do
     if [ "$USER" = "root" ]; then
       FUN=$(whiptail --title "$TITLE, SYSTEM options ($USER)" --backtitle="$BTITLE" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-        "S System ..." "Configure system settings" \
-        "I Interfaces ..." "Configure external interfaces (SSH, ...)" \
-        "L Localisation ..." "Configure language, regional and keyboard settings" \
-        "V Advanced ..." "Configure advanced settings" \
-        "U Update" "Update this tool to the latest version" \
-        "A About" "Information about this tool" \
+        "SYS System ..." "Configure system settings" \
+        "INT Interfaces ..." "Configure external interfaces (SSH, ...)" \
+        "LOC Localisation ..." "Configure language, regional and keyboard settings" \
+        "ADV Advanced ..." "Configure advanced settings" \
+        "UPD Update" "Update this tool to the latest version" \
+        "ABT About" "Information about this tool" \
         3>&1 1>&2 2>&3)
     else
       FUN=$(whiptail --title "$TITLE, USER options ($USER)" --backtitle="$BTITLE" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-        "W WiFi Power" "Turn Wifi on/off" \
-        "E WiFi Connect" "Switch WiFi network" \
-        "R WiFi ..." "Configure WiFi networks" \
-        "L LCD ..." "Set the screen brightness and contrast" \
-        "S Startup ..." "System Startup Options" \
-        "0 Shutdown" "Poweroff the machine" \
-        "P Password" "Change password for the '$USER' user" \
-        "A About" "Information about this tool" \
+        "WIP WiFi Power" "Turn Wifi on/off" \
+        "WIC WiFi Connect" "Switch WiFi network" \
+        "WIN WiFi ..." "Configure WiFi networks" \
+        "LCD LCD ..." "Set the screen brightness and contrast" \
+        "STA Startup ..." "System Startup Options" \
+        "OFF Shutdown" "Poweroff the machine" \
+        "PSS Password" "Change password for the '$USER' user" \
+        "ABT About" "Information about this tool" \
         3>&1 1>&2 2>&3)
     fi
     RET=$?
@@ -784,19 +799,19 @@ if [ "$INTERACTIVE" = True ]; then
       do_finish
     elif [ $RET -eq 0 ]; then
       case "$FUN" in
-        S\ *) do_system_menu ;;
-        I\ *) do_interface_menu ;;
-        L\ *) do_internationalisation_menu ;;
-        V\ *) do_advanced_menu ;;
-        U\ *) do_update ;;
-        A\ *) do_about ;;
-        W\ *) do_switch_wifi_power ;;
-        E\ *) do_switch_wifi_net ;;
-        R\ *) do_wifi_setup ;;
-        L\ *) do_lcd_setup ;;
-        S\ *) do_boot_behaviour ;;
-        0\ *) do_poweroff ;;
-        P\ *) do_change_pass ;;
+        SYS\ *) do_system_menu ;;
+        INT\ *) do_interface_menu ;;
+        LOC\ *) do_internationalisation_menu ;;
+        ADV\ *) do_advanced_menu ;;
+        UPD\ *) do_update ;;
+        ABT\ *) do_about ;;
+        WIP\ *) do_switch_wifi_power ;;
+        WIC\ *) do_switch_wifi_net ;;
+        WIN\ *) do_wifi_setup ;;
+        LCD\ *) do_lcd_setup ;;
+        STA\ *) do_boot_behaviour ;;
+        OFF\ *) do_poweroff ;;
+        PSS\ *) do_change_pass ;;
         *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
       esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
     else
