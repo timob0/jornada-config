@@ -140,6 +140,10 @@ do_add_user() {
 
   whiptail --msgbox "You will now be asked to enter a new password for the $NEWUSER user" 14 60 1
   passwd $NEWUSER &&
+
+  # create an alias to this tool
+  echo "alias jconf='sudo /opt/jornada-config/jornada-config'" > /home/$NEWUSER/.bash_aliases
+
   whiptail --msgbox "User created successfully." 14 60 1
 }
 
