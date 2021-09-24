@@ -262,7 +262,13 @@ do_ssh() {
 
 disable_raspi_config_at_boot() {
   if [ -e /etc/profile.d/jornada-config.sh ]; then
-    rm -f /etc/profile.d/jornada-config.sh
+    whiptail --yesno \
+      "Disable this config script from next boot?" \
+      $DEFAULT 20 60 2
+      if [ $? -ne 0 ]; then
+        rm -f /etc/profile.d/jornada-config.sh
+        whiptail --msgbox "Disabled. Rerun this script with: /opt/jornada-config/jornada-config" 14 60 1
+      fi  
   fi
 }
 
