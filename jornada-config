@@ -264,7 +264,7 @@ disable_raspi_config_at_boot() {
   if [ -e /etc/profile.d/jornada-config.sh ]; then
     whiptail --yesno \
       "Disable this config script from next boot?" \
-      $DEFAULT 20 60 2
+      $DEFAULT 14 60 2
       if [ $? -ne 0 ]; then
         rm -f /etc/profile.d/jornada-config.sh
         whiptail --msgbox "Disabled. Rerun this script with: /opt/jornada-config/jornada-config" 14 60 1
@@ -523,7 +523,7 @@ do_wifi_setup() {
   echo "IPv4.method=dhcp" >> $cfgfile
   echo "IPv6.method=off" >> $cfgfile
   echo "IPv6.privacy=disabled" >> $cfgfile
-
+  /etc/init.d/connman restart
   whiptail --yesno "Configuration file written to $cfgfile\n\nTry to connect?" 14 60 1
   if [ $? -eq 0 ]; then
     whiptail --infobox "Connecting to $NETWORK_NAME ..." 14 60 1
@@ -535,7 +535,7 @@ do_wifi_setup() {
 do_finish() {
   disable_raspi_config_at_boot
   if [ $ASK_TO_REBOOT -eq 1 ]; then
-    whiptail --yesno "Would you like to reboot now?" 20 60 2
+    whiptail --yesno "Would you like to reboot now?" 14 60 2
     if [ $? -eq 0 ]; then # yes
       sync
       reboot
@@ -546,7 +546,7 @@ do_finish() {
 
 do_nothing() {
   if [ "$INTERACTIVE" = True ]; then
-    whiptail --msgbox "This is not yet implemented" 20 60
+    whiptail --msgbox "This is not yet implemented" 14 60
   fi
 }
 
@@ -755,23 +755,6 @@ do_internationalisation_menu() {
   fi
 }
 
-do_advanced_menu() {
-  if is_jornada ; then
-    FUN=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --menu "Advanced Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-      "E Expand Filesystem" "Ensures that all of the SD card is available" \
-      3>&1 1>&2 2>&3)
-  fi
-  RET=$?
-  if [ $RET -eq 1 ]; then
-    return 0
-  elif [ $RET -eq 0 ]; then
-    case "$FUN" in
-      E\ *) do_expand_rootfs ;;
-      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
-  fi
-}
-
 #
 # Interactive use loop
 #
@@ -781,23 +764,23 @@ if [ "$INTERACTIVE" = True ]; then
    while true; do
     if [ "$USER" = "root" ]; then
       FUN=$(whiptail --title "$TITLE, SYSTEM options ($USER)" --backtitle="$BTITLE" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-        "SYS System ..." "Configure system settings" \
-        "INT Interfaces ..." "Configure external interfaces (SSH, ...)" \
-        "LOC Localisation ..." "Configure language, regional and keyboard settings" \
-        "ADV Advanced ..." "Configure advanced settings" \
-        "UPD Update" "Update this tool to the latest version" \
-        "ABT About" "Information about this tool" \
+        "S1 Resize Disk" "Resize root partition to use full disk capacity" \
+        "S2 System ..." "Configure system settings" \
+        "S3 Localisation ..." "Configure language, regional and keyboard settings" \
+        "S4 Interfaces ..." "Configure external interfaces (SSH, ...)" \
+        "U1 Update" "Update this tool to the latest version" \
+        "A1 About" "Information about this tool" \
         3>&1 1>&2 2>&3)
     else
       FUN=$(whiptail --title "$TITLE, USER options ($USER)" --backtitle="$BTITLE" --menu "Setup Options" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Finish --ok-button Select \
-        "WIP WiFi Power" "Turn Wifi on/off" \
-        "WIC WiFi Connect" "Switch WiFi network" \
-        "WIN WiFi ..." "Configure WiFi networks" \
-        "LCD LCD ..." "Set the screen brightness and contrast" \
-        "STA Startup ..." "System Startup Options" \
-        "OFF Shutdown" "Poweroff the machine" \
-        "PSS Password" "Change password for the '$USER' user" \
-        "ABT About" "Information about this tool" \
+        "W1 WiFi Power" "Turn Wifi on/off" \
+        "W2 WiFi Connect" "Switch WiFi network" \
+        "W3 WiFi ..." "Configure WiFi networks" \
+        "L1 LCD ..." "Set the screen brightness and contrast" \
+        "S1 Startup ..." "System Startup Options" \
+        "S2 Shutdown" "Poweroff the machine" \
+        "P1 Password" "Change password for the '$USER' user" \
+        "A1 About" "Information about this tool" \
         3>&1 1>&2 2>&3)
     fi
     RET=$?
@@ -805,19 +788,19 @@ if [ "$INTERACTIVE" = True ]; then
       do_finish
     elif [ $RET -eq 0 ]; then
       case "$FUN" in
-        SYS\ *) do_system_menu ;;
-        INT\ *) do_interface_menu ;;
-        LOC\ *) do_internationalisation_menu ;;
-        ADV\ *) do_advanced_menu ;;
-        UPD\ *) do_update ;;
-        ABT\ *) do_about ;;
-        WIP\ *) do_switch_wifi_power ;;
-        WIC\ *) do_switch_wifi_net ;;
-        WIN\ *) do_wifi_setup ;;
-        LCD\ *) do_lcd_setup ;;
-        STA\ *) do_boot_behaviour ;;
-        OFF\ *) do_poweroff ;;
-        PSS\ *) do_change_pass ;;
+        S1\ *) do_expand_rootfs ;;
+        S2\ *) do_system_menu ;;
+        S3\ *) do_internationalisation_menu ;;
+        S4\ *) do_interface_menu ;;
+        U1\ *) do_update ;;
+        A1\ *) do_about ;;
+        W1\ *) do_switch_wifi_power ;;
+        W2\ *) do_switch_wifi_net ;;
+        W3\ *) do_wifi_setup ;;
+        L1\ *) do_lcd_setup ;;
+        S1\ *) do_boot_behaviour ;;
+        S2\ *) do_poweroff ;;
+        P1\ *) do_change_pass ;;
         *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
       esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
     else
