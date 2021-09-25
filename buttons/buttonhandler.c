@@ -16,10 +16,10 @@
 
 #define EV_BUF_SIZE 16
 
-#define FILE_POWER "/etc/handle_power.sh"
-#define FILE_VOLUP "/etc/handle_volup.sh"
-#define FILE_VOLDN "/etc/handle_voldn.sh"
-#define FILE_MUTE  "/etc/handle_mute.sh"
+#define FILE_POWER "/etc/j720b_power.sh"
+#define FILE_VOLUP "/etc/j720b_volup.sh"
+#define FILE_VOLDN "/etc/j720b_voldn.sh"
+#define FILE_MUTE  "/etc/j720b_mute.sh"
 
 // Handle Ctrl-C gracefully
 static volatile int running = 1;
@@ -39,6 +39,11 @@ int main(int argc, char *argv[])
     char name[256] = "N/A";
 
     struct input_event ev[EV_BUF_SIZE]; /* Read up to N events ata time */
+
+    unsigned short key = 0;
+    signed int value = -1;
+    unsigned short lastkey = 0;
+    signed int lastvalue = -1;
 
     if (argc < 2) {
         fprintf(stderr,
@@ -65,19 +70,11 @@ int main(int argc, char *argv[])
     fprintf(stderr,
         "Name      : %s\n"
         "Version   : %d.%d.%d\n"
-        "ID        : Bus=%04x Vendor=%04x Product=%04x Version=%04x\n"
-        "----------\n"
         ,
         name,
-
         version >> 16,
         (version >> 8) & 0xff,
-        version & 0xff,
-
-        id[ID_BUS],
-        id[ID_VENDOR],
-        id[ID_PRODUCT],
-        id[ID_VERSION]
+        version & 0xff
     );
 
    // Setup CTRL-C Handler
@@ -99,6 +96,7 @@ int main(int argc, char *argv[])
 
         /* Implement code to translate type, code and value */
         for (i = 0; i < sz / sizeof(struct input_event); ++i) {
+            #ifdef DEBUG
             fprintf(stderr,
                 "%ld.%06ld: "
                 "type=%02x "
@@ -110,30 +108,57 @@ int main(int argc, char *argv[])
                 ev[i].code,
                 ev[i].value
             );
-            
-            //Handle J720 R/M/L/Power Keys, for each the existence 
-            // of a handler file is tested and if found executed
-	    if (ev[i].type == EV_KEY && ev[i].code == KEY_POWER) {
-		if( access(FILE_POWER, F_OK ) == 0 ) {
-		    int status = system(FILE_POWER);
-		}
-	    }
-	    else if (ev->type == EV_KEY && ev->code == KEY_VOLUMEDOWN) {
-		if( access(FILE_VOLDN, F_OK ) == 0 ) {
-		    int status = system(FILE_VOLDN);
-		}	    
-	    }
-	    else if (ev->type == EV_KEY && ev->code == KEY_VOLUMEUP) {
-	        if( access(FILE_VOLUP, F_OK ) == 0 ) {
-		    int status = system(FILE_VOLUP);
-		}
-	    }
-	    else if (ev->type == EV_KEY && ev->code == KEY_MUTE) {
-	        if( access(FILE_MUTE, F_OK ) == 0 ) {
-		    int status = system(FILE_MUTE);
-		}
-	    }
-	    
+            #endif
+
+            // Key and either pressed or released
+            if (ev[i].type == EV_KEY && (ev[i].value==1 || ev[i].value==2)) {
+                key = ev[i].code;
+                value = ev[i].value;
+
+                // I want key transitions
+                if (key==lastkey && value!=lastvalue) {
+                    //Handle J720 R/M/L/Power Keys, for each the existence 
+                    // of a handler file is tested and if found executed
+                    if (ev[i].code == 0x5b) {
+                        printf("power key\n");
+                        if( access(FILE_POWER, F_OK ) == 0 ) {
+                            printf("file found, running\n");
+                            int status = system(FILE_POWER);
+                        }
+                    }
+                    else if (ev[i].code == KEY_VOLUMEDOWN) {
+                        printf("volume- key\n");
+                        if( access(FILE_VOLDN, F_OK ) == 0 ) {
+                            printf("file found, running\n");
+                            int status = system(FILE_VOLDN);
+                        }
+                    }
+                    else if (ev[i].code == KEY_VOLUMEUP) {
+                        printf("volume+ key\n");
+                        if( access(FILE_VOLUP, F_OK ) == 0 ) {
+                            printf("file found, running\n");
+                            int status = system(FILE_VOLUP);
+                        }
+                    }
+                    else if (ev[i].code == KEY_MUTE) {
+                        printf("mute key\n");
+                        if( access(FILE_MUTE, F_OK ) == 0 ) {
+                            printf("file found, running\n");
+                            int status = system(FILE_MUTE);
+                        }
+                    }
+                    else if (ev[i].code == KEY_F12) {
+                        printf("f12 key\n");
+                        if( access(FILE_MUTE, F_OK ) == 0 ) {
+                            printf("file found, running mute file\n");
+                            int status = system(FILE_MUTE);
+                        }
+                    }
+                }
+                lastkey = key;
+                lastvalue = value;
+            }
+
         }
     }
 
