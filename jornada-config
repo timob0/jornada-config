@@ -575,22 +575,26 @@ set_contrast() {
 
 inc_contrast() {
   CONTRAST=`cat /sys/devices/platform/jornada_lcd/lcd/s1d13xxxfb/contrast`  
-  CONTRAST=$(($CONTRAST+16)) && set_contrast $CONTRAST ;;
+  CONTRAST=$(($CONTRAST+16))
+  set_contrast $CONTRAST
 }
 
 dec_contrast() {
   CONTRAST=`cat /sys/devices/platform/jornada_lcd/lcd/s1d13xxxfb/contrast`  
-  CONTRAST=$(($CONTRAST-16)) && set_contrast $CONTRAST ;;
+  CONTRAST=$(($CONTRAST-16))
+  set_contrast $CONTRAST
 }
 
 inc_brightness() {
   BRIGHT=`cat /sys/class/backlight/s1d13xxxfb/brightness`
-  BRIGHT=$(($BRIGHT+16)) && set_brightness $BRIGHT ;;
+  BRIGHT=$(($BRIGHT+16))
+  set_brightness $BRIGHT
 }
 
 dec_brightness() {
   BRIGHT=`cat /sys/class/backlight/s1d13xxxfb/brightness`
-  BRIGHT=$(($BRIGHT-16)) && set_brightness $BRIGHT ;;
+  BRIGHT=$(($BRIGHT-16))
+  set_brightness $BRIGHT
 }
 
 do_enable_backlight() {
