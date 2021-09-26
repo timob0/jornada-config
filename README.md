@@ -41,7 +41,7 @@ When you finish, select the option to disable the config program after next rebo
 
 You can run it later at any time with `/opt/jornada-config/jornada-config`
 
-###User mode###
+### User mode ###
 The program has a user mode too which exposes functions to turn on / off the WiFi, connect to different networks, configure startup behavior (automatic console login, automatic X11 startup) and a bit more. 
 ![Jornada Config Screen](https://raw.githubusercontent.com/timob0/jornada-config/main/img/jc_user.png "User view")
 
