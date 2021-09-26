@@ -37,8 +37,9 @@ Start with resizing the disk so you can use its full capacity, then set localiza
 
 When you finish, select the option to disable the config program after next reboot, otherwise it will show up on each login. 
 
-5. (Optional) Install the button handler
-  - Included is a background program which runs as a services and listens for certain keystrokes (Power, Mute, Vol+, Vol-). For each of these keystrokes, actions can be configured by placing a shell script with a certain name in the /etc folder:
+(Optional) Install the button handler
+-------------------------------------
+- Included is a background program which runs as a services and listens for certain keystrokes (Power, Mute, Vol+, Vol-). For each of these keystrokes, actions can be configured by placing a shell script with a certain name in the /etc folder:
     - j720b_power.sh  --  Runs when the power key is pressed
     - 720b_mute.sh  -- Runs when the mute button is pressed
     - j720_volup.sh -- Runs when the volume + button is pressed
