@@ -729,14 +729,17 @@ do
   --dec_brightness)
     dec_brightness
     exit 0;
+    ;;
   --unsleep)
     do_enable_wifi
     do_enable_backlight
     exit 0;
+    ;;    
   --sleep)
     do_disable_wifi
     do_disable_backlight
     exit 0;
+    ;;    
   nonint)
     INTERACTIVE=False
     "$@"
