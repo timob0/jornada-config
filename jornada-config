@@ -106,7 +106,6 @@ do_expand_rootfs() {
   mkswap /dev/hda3  >> /tmp/resize.log
   swapon -a  >> /tmp/resize.log
   resize2fs $ROOT_PART >> /tmp/resize.log
-  fsck $ROOT_PART
 
   whiptail --msgbox "All done. Root partition using full disk capacity now.\n$(parted "$ROOT_DEV" -s unit MB p | tail -n+7)\n\nPlease review logfile /tmp/resize.log" 14 60 2
   whiptail --textbox /tmp/resize.log 14 60 2
@@ -618,12 +617,19 @@ do_change_keyboard() {
     whiptail --msgbox "Copied j720-keyboard script to /etc/init.d" 10 60 1
   fi 
 
+  if [ ! -f $HOME/.Xsession ]; then
+    echo '[ -f "$HOME/.Xmodmap" ] && /usr/bin/xmodmap "$HOME/.Xmodmap"' > $HOME/.Xsession
+    whiptail --msgbox "xmodmap command added to $HOME/.Xsession file" 10 60 1
+  fi 
+
   if (whiptail --title "Keyboard layout" --yes-button "US" --no-button "German"  --yesno "Please select which keymap to install at boot time. The change will become effective immediately." 10 60) then
     whiptail --infobox "Install and load US keymap..." 10 60 1
     cp -f /opt/jornada-config/keymaps/us-j720-key.map /etc/j720-key.map
+    cp -f /opt/jornada-config/keymaps/.us-Xmodmap $HOME/.Xmodmap
   else
     whiptail --infobox "Install and load keymap..." 10 60 1
     cp -f /opt/jornada-config/keymaps/de-j720-key.map /etc/j720-key.map
+    cp -f /opt/jornada-config/keymaps/.de-Xmodmap $HOME/.Xmodmap
   fi
   /etc/init.d/j720-keyboard.sh start
 }
@@ -643,6 +649,13 @@ do_shell_setup() {
 do_x11_wm_setup() {
   whiptail --infobox "Please select your desired X11 window manager" 10 60 1
   update-alternatives --config x-window-manager
+
+  # Deactivate icewm session if other window manager configured
+  if ! update-alternatives --get-selections | grep x-window-manager | grep -q icewm ; then
+    update-alternatives --remove x-session-manager /usr/bin/icewm-session
+  else
+    update-alternatives --install x-session-manager /usr/bin/icewm-session
+  fi
 }
 
 nonint() {
