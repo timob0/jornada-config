@@ -11,7 +11,7 @@ How to use:
   - `sudo apt install qemu binfmt-support qemu-user-static systemd-container`
   - Mount the card:
   - `sudo systemd-nspawn -D /media/user/cardname`
-3. Then, install this package in the QEMU environment:
+3. Then, install this package in the QEMU environment by runnig the below script (save it as a file to your card to run conveniently):
 
 ```
 mv /etc/resolv.conf /etc/resolv.bak
@@ -32,3 +32,14 @@ mv /etc/resolv.bak /etc/resolv.conf
 4. Restart and login as root
 You will automatically be presented the `jornada-config` program to do the baseline setup of your Jornada under Linux:
 ![Jornada Config Screen](https://raw.githubusercontent.com/timob0/jornada-config/main/img/jc_root.png "System view")
+
+Start with resizing the disk so you can use its full capacity, then set localization options (language, timezone and keyboard), then continue with creating a new user for regular work (it will get sudo access) and setup the WiFi. 
+
+When you finish, select the option to disable the config program after next reboot, otherwise it will show up on each login. 
+
+5. (Optional) Install the button handler
+  - Included is a background program which runs as a services and listens for certain keystrokes (Power, Mute, Vol+, Vol-). For each of these keystrokes, actions can be configured by placing a shell script with a certain name in the /etc folder:
+    - j720b_power.sh  --  Runs when the power key is pressed
+    - 720b_mute.sh  -- Runs when the mute button is pressed
+    - j720_volup.sh -- Runs when the volume + button is pressed
+    - j720b_voldn.sh -- you guess it, right? 
