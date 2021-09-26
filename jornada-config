@@ -651,9 +651,11 @@ do_x11_wm_setup() {
   update-alternatives --config x-window-manager
 
   # Deactivate icewm session if other window manager configured
-  if ! update-alternatives --get-selections | grep x-window-manager | grep -q icewm ; then
+  if ! (update-alternatives --get-selections | grep x-window-manager | grep -q icewm) ; then
+    whiptail --infobox "Removing icewm session manager" 10 60 1
     update-alternatives --remove x-session-manager /usr/bin/icewm-session
   else
+    whiptail --infobox "Adding icewm session manager" 10 60 1
     update-alternatives --install x-session-manager /usr/bin/icewm-session
   fi
 }
