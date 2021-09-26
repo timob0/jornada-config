@@ -30,3 +30,5 @@ rm /etc/resolv.conf
 mv /etc/resolv.bak /etc/resolv.conf
 ```
 4. Restart and login as root
+You will automatically be presented the `jornada-config` program to do the baseline setup of your Jornada under Linux:
+![Jornada Config Screen](https://raw.githubusercontent.com/timob0/jornada-config/main/img/jc_root.png "System view")
