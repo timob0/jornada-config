@@ -29,3 +29,4 @@ cp -f /opt/jornada-config/scripts/inittab.noauto /etc/inittab
 rm /etc/resolv.conf
 mv /etc/resolv.bak /etc/resolv.conf
 ```
+4. Restart and login as root
