@@ -571,6 +571,28 @@ set_contrast() {
   echo $1 > /sys/devices/platform/jornada_lcd/lcd/s1d13xxxfb/contrast
 }
 
+inc_contrast() {
+  CONTRAST=`cat /sys/devices/platform/jornada_lcd/lcd/s1d13xxxfb/contrast`  
+  CONTRAST=$(($CONTRAST+16)) && set_contrast $CONTRAST ;;
+}
+
+dec_contrast() {
+  CONTRAST=`cat /sys/devices/platform/jornada_lcd/lcd/s1d13xxxfb/contrast`  
+  CONTRAST=$(($CONTRAST-16)) && set_contrast $CONTRAST ;;
+}
+
+inc_brightness() {
+  BRIGHT=`cat /sys/class/backlight/s1d13xxxfb/brightness`
+  BRIGHT=$(($BRIGHT+16)) && set_brightness $BRIGHT ;;
+}
+
+dec_brightness() {
+  BRIGHT=`cat /sys/class/backlight/s1d13xxxfb/brightness`
+  BRIGHT=$(($BRIGHT-16)) && set_brightness $BRIGHT ;;
+}
+
+
+
 do_lcd_setup() {
   while true; do
     BRIGHT=`cat /sys/class/backlight/s1d13xxxfb/brightness`
@@ -581,17 +603,16 @@ do_lcd_setup() {
       "V  (*) <<" "           decrease" \
       "C  (#) >>" "Contrast increase ($CONTRAST)" \
       "X  (#) <<" "         decrease" \
-      "S Save" "Save settings to ${USER}s profile" \
       3>&1 1>&2 2>&3)
     RET=$?
     if [ $RET -eq 1 ]; then
       return 0
     elif [ $RET -eq 0 ]; then
       case "$FUN" in
-        B\ *) BRIGHT=$(($BRIGHT+5)) && set_brightness $BRIGHT ;;
-        V\ *) BRIGHT=$(($BRIGHT-5)) && set_brightness $BRIGHT ;;
-        C\ *) CONTRAST=$(($CONTRAST+5)) &&  set_contrast $CONTRAST ;;
-        X\ *) CONTRAST=$(($CONTRAST-5)) &&  set_contrast $CONTRAST ;;
+        B\ *) inc_brightness ;;
+        V\ *) dec_brightness ;;
+        C\ *) inc_contrast ;;
+        X\ *) dec_contrast ;;
         S\ *) do_nothing ;;
         *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
       esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
@@ -653,10 +674,12 @@ do_x11_wm_setup() {
   # Deactivate icewm session if other window manager configured
   if ! (update-alternatives --get-selections | grep x-window-manager | grep -q icewm) ; then
     whiptail --infobox "Removing icewm session manager" 10 60 1
-    update-alternatives --remove x-session-manager /usr/bin/icewm-session
+    # update-alternatives --remove x-session-manager /usr/bin/icewm-session
+    rm /etc/alternatives/x-session-manager
   else
     whiptail --infobox "Adding icewm session manager" 10 60 1
-    update-alternatives --install x-session-manager /usr/bin/icewm-session
+    # update-alternatives --install x-session-manager /usr/bin/icewm-session
+    ln -s /usr/bin/icewm-session /etc/alternatives/x-session-manager
   fi
 }
 
@@ -687,6 +710,13 @@ do
     do_update
     exit 0;
     ;;
+  --inc_brightness)
+    inc_brightness
+    exit 0;
+    ;;
+  --dec_brightness)
+    dec_brightness
+    exit 0;
   nonint)
     INTERACTIVE=False
     "$@"
