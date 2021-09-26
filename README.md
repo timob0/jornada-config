@@ -11,6 +11,7 @@ How to use:
   - `sudo apt install qemu binfmt-support qemu-user-static systemd-container`
   - Mount the card:
   - `sudo systemd-nspawn -D /media/user/cardname`
+    - where user is your username and cardname is the particular mountpoint of the storage card 
 3. Then, install this package in the QEMU environment by runnig the below script (save it as a file to your card to run conveniently):
 
 ```
