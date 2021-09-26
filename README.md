@@ -34,7 +34,8 @@ mv /etc/resolv.bak /etc/resolv.conf
 You will automatically be presented the `jornada-config` program to do the baseline setup of your Jornada under Linux:
 ![Jornada Config Screen](https://raw.githubusercontent.com/timob0/jornada-config/main/img/jc_root.png "System view")
 
-Start with resizing the disk so you can use its full capacity, then set localization options (language, timezone and keyboard), then continue with creating a new user for regular work (it will get sudo access) and setup the WiFi. 
+Start with resizing the disk so you can use its full capacity, then set localization options (language, timezone and keyboard), then continue with creating a new user for regular work (it will get sudo access) and setup the WiFi.
+_note:_ locale and timezone take quite some time due to background package configuration, the machine is not stuck!
 
 When you finish, select the option to disable the config program after next reboot, otherwise it will show up on each login. 
 
