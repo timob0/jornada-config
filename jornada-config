@@ -359,11 +359,13 @@ get_wifi_connected() {
 }
 
 do_enable_wifi() {
+  pccardctl insert 0
   connmanctl enable wifi
 }
 
 do_disable_wifi() {
   connmanctl disable wifi
+  pccardctl eject 0
 }
 
 do_scan_networks() {
@@ -591,7 +593,13 @@ dec_brightness() {
   BRIGHT=$(($BRIGHT-16)) && set_brightness $BRIGHT ;;
 }
 
+do_enable_backlight() {
+  echo 0 > /sys/class/backlight/s1d13xxxfb/bl_power
+}
 
+do_disable_backlight() {
+  echo 1 > /sys/class/backlight/s1d13xxxfb/bl_power
+}
 
 do_lcd_setup() {
   while true; do
@@ -716,6 +724,14 @@ do
     ;;
   --dec_brightness)
     dec_brightness
+    exit 0;
+  --unsleep)
+    do_enable_wifi
+    do_enable_backlight
+    exit 0;
+  --sleep)
+    do_disable_wifi
+    do_disable_backlight
     exit 0;
   nonint)
     INTERACTIVE=False
