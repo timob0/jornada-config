@@ -1,15 +1,19 @@
-# jornada-config
+jornada-config
+================
+
 Jornada 7xx Devuan-Linux configuration scripts and localized keyboard / button handler services
 
 How to use:
-- Burn your ARM Devuan Distribution for the Jornada 720 to a storage card
-- Mount the storage card on the desktop PC under a QEMU container:
--   Install packages if you don't have yet: 
--     sudo apt install qemu binfmt-support qemu-user-static systemd-container
--   Mount the card:
--     sudo systemd-nspawn -D /media/user/cardname
-- Then, install this package in the QEMU environment:
+-----------
+1. Burn your ARM Devuan Distribution for the Jornada 720 to a storage card
+2. Mount the storage card on the desktop PC under a QEMU container:
+  - Install packages if you don't have yet: 
+  - `sudo apt install qemu binfmt-support qemu-user-static systemd-container`
+  - Mount the card:
+  - `sudo systemd-nspawn -D /media/user/cardname`
+3. Then, install this package in the QEMU environment:
 
+```
 mv /etc/resolv.conf /etc/resolv.bak
 echo "nameserver 192.168.178.1" > /etc/resolv.conf 
 echo "search fritz.box" >> /etc/resolv.conf
@@ -24,3 +28,4 @@ cp -f /opt/jornada-config/scripts/inittab.noauto /etc/inittab
 
 rm /etc/resolv.conf
 mv /etc/resolv.bak /etc/resolv.conf
+```
