@@ -1,5 +1,0 @@
-# Load global /etc/X11/xinit/Xmodmap file
-if [ -f /etc/X11/xinit/Xmodmap ]; then
-    /usr/bin/xmodmap /etc/X11/xinit/Xmodmap
-fi
-
