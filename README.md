@@ -8,7 +8,7 @@ How to use:
 1. Burn your ARM Devuan Distribution for the Jornada 720 to a storage card
 2. Mount the storage card on your desktop Linux-PC under a QEMU container:
   - Install supporting packages if you don't have yet: 
-  - `sudo apt install qemu binfmt-support qemu-user-static systemd-container`
+  - `sudo apt install qemu binfmt-support qemu-user-static systemd-container busybox`
   - Mount the card:
   - `sudo systemd-nspawn -D /media/user/cardname`
     - where _user_ is your username and _cardname_ is the particular mountpoint of the storage card 
