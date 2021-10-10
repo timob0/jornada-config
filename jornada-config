@@ -556,55 +556,43 @@ do_nothing() {
 }
 
 set_cpufreq() {
-        if [ "$1" == 59 ]; then
+        if [ "$1" -eq 59 ]; then
                 echo "Setting CPU frequency to 59.0 MHz"
                 busybox devmem 0x90020014 w 0x00000000
-
-                elif [ "$1" -eq 73 ]; then
+        elif [ "$1" -eq 73 ]; then
                 echo "Setting CPU frequency to 73.7 MHz"
                 busybox devmem 0x90020014 w 0x00000001
-
-                elif [ "$1" -eq 88 ]; then
+        elif [ "$1" -eq 88 ]; then
                 echo "Setting CPU frequency to 88.5 MHz"
                 busybox devmem 0x90020014 w 0x00000002
-
-                elif [ "$1" -eq 103 ]; then
+        elif [ "$1" -eq 103 ]; then
                 echo "Setting CPU frequency to 103.2 MHz"
                 busybox devmem 0x90020014 w 0x00000003
-
-                elif [ "$1" -eq 118 ]; then
+        elif [ "$1" -eq 118 ]; then
                 echo "Setting CPU frequency to 118.0 MHz"
                 busybox devmem 0x90020014 w 0x00000004
-
-                elif [ "$1" -eq 132 ]; then
+        elif [ "$1" -eq 132 ]; then
                 echo "Setting CPU frequency to 132.7 MHz"
                 busybox devmem 0x90020014 w 0x00000005
-
-                elif [ "$1" -eq 147 ]; then
+        elif [ "$1" -eq 147 ]; then
                 echo "Setting CPU frequency to 147.5 MHz"
                 busybox devmem 0x90020014 w 0x00000006
-
-                elif [ "$1" -eq 162 ]; then
+        elif [ "$1" -eq 162 ]; then
                 echo "Setting CPU frequency to 162.2 MHz"
                 busybox devmem 0x90020014 w 0x00000007
-
-                elif [ "$1" -eq 176 ]; then
+        elif [ "$1" -eq 176 ]; then
                 echo "Setting CPU frequency to 176.9 MHz"
                 busybox devmem 0x90020014 w 0x00000008
-
-                elif [ "$1" -eq 191 ]; then
+        elif [ "$1" -eq 191 ]; then
                 echo "Setting CPU frequency to 191.7 MHz"
                 busybox devmem 0x90020014 w 0x00000009
-
-                elif [ "$1" -eq 206 ]; then
+        elif [ "$1" -eq 206 ]; then
                 echo "Setting CPU frequency to 206.4 MHz"
                 busybox devmem 0x90020014 w 0x0000000A
-
-                elif [ "$1" -eq 221 ]; then
+        elif [ "$1" -eq 221 ]; then
                 echo "Setting CPU frequency to 221.2 MHz"
                 busybox devmem 0x90020014 w 0x0000000B
-
-                else
+        else
                 echo "Set the CPU frequency (example "./cpufreq.sh 206") - allowed values: 59, 73, 88, 103, 118, 132, 147, 162, 176, 191, 206, 221"
         fi
 }
@@ -887,7 +875,7 @@ do_cpuclock_menu() {
     "176" "176 MHz" \
     "191" "191 MHz" \
     "206" "206 MHz" \
-    "221" "221 MHz - Overclock, might use more battery" \    
+    "221" "221 MHz - Overclock, might use more battery" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -900,8 +888,8 @@ do_cpuclock_menu() {
 
 do_bxemu_menu() {
   FUN=$(whiptail --title "$TITLE" --backtitle="$BTITLE" --menu "Select BX Handling" $WT_HEIGHT $WT_WIDTH $WT_MENU_HEIGHT --cancel-button Back --ok-button Select \
-    "E" "Emulate BX in Kernel (slower)" \
-    "P" "Patch BX in Kernel (Faster)" \
+    "E " "Emulate BX in Kernel (slower)" \
+    "P " "Patch BX in Kernel (Faster)" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -912,6 +900,7 @@ do_bxemu_menu() {
       P\ *) do_bx_patch ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 14 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 14 60 1
+    echo "Selection: $FUN"
     cat /proc/cpu/bx_emulation
     sleep 2
   fi
