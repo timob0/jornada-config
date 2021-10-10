@@ -259,7 +259,7 @@ do_ssh() {
     return $RET
   fi
   if [ "$INTERACTIVE" = True ]; then
-    whiptail --msgbox "The SSH server is $STATUS" 20 60 1
+    whiptail --msgbox "The SSH server is $STATUS" 14 60 1
   fi
 }
 
@@ -560,53 +560,52 @@ set_cpufreq() {
                 echo "Setting CPU frequency to 59.0 MHz"
                 busybox devmem 0x90020014 w 0x00000000
 
-                elif [ "$1" == 73 ]; then
+                elif [ "$1" -eq 73 ]; then
                 echo "Setting CPU frequency to 73.7 MHz"
                 busybox devmem 0x90020014 w 0x00000001
 
-                elif [ "$1" == 88 ]; then
+                elif [ "$1" -eq 88 ]; then
                 echo "Setting CPU frequency to 88.5 MHz"
                 busybox devmem 0x90020014 w 0x00000002
 
-                elif [ "$1" == 103 ]; then
+                elif [ "$1" -eq 103 ]; then
                 echo "Setting CPU frequency to 103.2 MHz"
                 busybox devmem 0x90020014 w 0x00000003
 
-                elif [ "$1" == 118 ]; then
+                elif [ "$1" -eq 118 ]; then
                 echo "Setting CPU frequency to 118.0 MHz"
                 busybox devmem 0x90020014 w 0x00000004
 
-                elif [ "$1" == 132 ]; then
+                elif [ "$1" -eq 132 ]; then
                 echo "Setting CPU frequency to 132.7 MHz"
                 busybox devmem 0x90020014 w 0x00000005
 
-                elif [ "$1" == 147 ]; then
+                elif [ "$1" -eq 147 ]; then
                 echo "Setting CPU frequency to 147.5 MHz"
                 busybox devmem 0x90020014 w 0x00000006
 
-                elif [ "$1" == 162 ]; then
+                elif [ "$1" -eq 162 ]; then
                 echo "Setting CPU frequency to 162.2 MHz"
                 busybox devmem 0x90020014 w 0x00000007
 
-                elif [ "$1" == 176 ]; then
+                elif [ "$1" -eq 176 ]; then
                 echo "Setting CPU frequency to 176.9 MHz"
                 busybox devmem 0x90020014 w 0x00000008
 
-                elif [ "$1" == 191 ]; then
+                elif [ "$1" -eq 191 ]; then
                 echo "Setting CPU frequency to 191.7 MHz"
                 busybox devmem 0x90020014 w 0x00000009
 
-                elif [ "$1" == 206 ]; then
+                elif [ "$1" -eq 206 ]; then
                 echo "Setting CPU frequency to 206.4 MHz"
                 busybox devmem 0x90020014 w 0x0000000A
 
-                elif [ "$1" == 221 ]; then
+                elif [ "$1" -eq 221 ]; then
                 echo "Setting CPU frequency to 221.2 MHz"
                 busybox devmem 0x90020014 w 0x0000000B
 
                 else
                 echo "Set the CPU frequency (example "./cpufreq.sh 206") - allowed values: 59, 73, 88, 103, 118, 132, 147, 162, 176, 191, 206, 221"
-
         fi
 }
 
@@ -706,8 +705,8 @@ do_lcd_setup() {
         C\ *) inc_contrast ;;
         X\ *) dec_contrast ;;
         S\ *) do_nothing ;;
-        *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-      esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+        *) whiptail --msgbox "Programmer error: unrecognized option" 14 60 1 ;;
+      esac || whiptail --msgbox "There was an error running option $FUN" 14 60 1
     fi
   done
 }
@@ -855,8 +854,8 @@ do_system_menu() {
       S2\ *) do_change_pass ;;
       S3\ *) do_hostname ;;
       S4\ *) do_add_user ;;
-      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+      *) whiptail --msgbox "Programmer error: unrecognized option" 14 60 1 ;;
+    esac || whiptail --msgbox "There was an error running option $FUN" 14 60 1
   fi
 }
 
@@ -870,8 +869,8 @@ do_interface_menu() {
   elif [ $RET -eq 0 ]; then
     case "$FUN" in
       S\ *) do_ssh ;;
-      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+      *) whiptail --msgbox "Programmer error: unrecognized option" 14 60 1 ;;
+    esac || whiptail --msgbox "There was an error running option $FUN" 14 60 1
   fi
 }
 
@@ -894,7 +893,8 @@ do_cpuclock_menu() {
   if [ $RET -eq 1 ]; then
     return 0
   elif [ $RET -eq 0 ]; then
-    set_cpufreq "$FUN" || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+    set_cpufreq "$FUN"
+    sleep 2
   fi
 }
 
@@ -910,8 +910,10 @@ do_bxemu_menu() {
     case "$FUN" in
       E\ *) do_bx_emulator ;;
       P\ *) do_bx_patch ;;
-      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+      *) whiptail --msgbox "Programmer error: unrecognized option" 14 60 1 ;;
+    esac || whiptail --msgbox "There was an error running option $FUN" 14 60 1
+    cat /proc/cpu/bx_emulation
+    sleep 2
   fi
 }
 
@@ -927,8 +929,8 @@ do_performance_menu() {
     case "$FUN" in
       OC\ *) do_cpuclock_menu ;;
       BX\ *) do_bxemu_menu ;;
-      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+      *) whiptail --msgbox "Programmer error: unrecognized option" 14 60 1 ;;
+    esac || whiptail --msgbox "There was an error running option $FUN" 14 60 1
   fi
 }
 
@@ -946,8 +948,8 @@ do_internationalisation_menu() {
       L\ *) do_change_locale ;;
       T\ *) do_change_timezone ;;
       K\ *) do_change_keyboard ;;
-      *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-    esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+      *) whiptail --msgbox "Programmer error: unrecognized option" 14 60 1 ;;
+    esac || whiptail --msgbox "There was an error running option $FUN" 14 60 1
   fi
 }
 
@@ -999,8 +1001,8 @@ if [ "$INTERACTIVE" = True ]; then
         B2\ *) do_poweroff ;;
         P1\ *) do_change_pass ;;
         P2\ *) do_performance_menu ;;
-        *) whiptail --msgbox "Programmer error: unrecognized option" 20 60 1 ;;
-      esac || whiptail --msgbox "There was an error running option $FUN" 20 60 1
+        *) whiptail --msgbox "Programmer error: unrecognized option" 14 60 1 ;;
+      esac || whiptail --msgbox "There was an error running option $FUN" 14 60 1
     else
       exit 1
     fi
