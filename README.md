@@ -6,9 +6,9 @@ Jornada 7xx Devuan-Linux configuration scripts and localized keyboard / button h
 How to use:
 -----------
 1. Burn your ARM Devuan Distribution for the Jornada 720 to a storage card
-  - Download the latest image from here: https://app.sugarsync.com/iris/wf/D4898663_09915533_66697#cGFnZUlkPXdlYmxpbmtzJmlzV2VibGlua3NGb2xkZXI9dHJ1ZSZpc0l0ZW1SZWZyZXNoQWxsb3dlZD10cnVlJnVzZXJJZD0tMSZjdXJyZW50T3duZXJJZD05MzQzMTE4JmN1cnJlbnRGb2xkZXJJZD01NDQ2MDA4OF8xMTE0MiZjdXJyZW50Rm9sZGVyTmFtZT1hLURldkpvcm5hZGE3MjAmd2VibGlua0lkPUQ0ODk4NjYzXzA5OTE1NTMzXzY2Njk3JnRva2VuVGltZT0xNjMzODg4NTI3NTk3JmNzcmZ0b2tlbj00MDI0MGQ3Ni1kMTI1LTQ3OTItYTA0Zi1hZjUwMjc1MTE5ZmImbW9kZT0=
-  - Then insert our memory card and find its device, under Linux do `lsblk` to find it
-  - Burn the image, under Linux: `unzip -p image.zip | dd of=/dev/sdX bs=1M progess=status` where `/dev/sdX` is your memory card device
+  - Download the latest image from here: [Jovals Sugarsync site](https://app.sugarsync.com/iris/wf/D4898663_09915533_66697#cGFnZUlkPXdlYmxpbmtzJmlzV2VibGlua3NGb2xkZXI9dHJ1ZSZpc0l0ZW1SZWZyZXNoQWxsb3dlZD10cnVlJnVzZXJJZD0tMSZjdXJyZW50T3duZXJJZD05MzQzMTE4JmN1cnJlbnRGb2xkZXJJZD01NDQ2MDA4OF8xMTE0MiZjdXJyZW50Rm9sZGVyTmFtZT1hLURldkpvcm5hZGE3MjAmd2VibGlua0lkPUQ0ODk4NjYzXzA5OTE1NTMzXzY2Njk3JnRva2VuVGltZT0xNjMzODg4NTI3NTk3JmNzcmZ0b2tlbj00MDI0MGQ3Ni1kMTI1LTQ3OTItYTA0Zi1hZjUwMjc1MTE5ZmImbW9kZT0=)
+  - Then insert your memory card and find its device, under Linux do `lsblk` to find it
+  - Burn the image, under Linux: `unzip -p ~/Downloads/DevJ7_31Gb_AutoIceWM_WPA_VNC_RS.zip | sudo dd of=/dev/sdd bs=1M status=progress` where /dev/sdd is your memory card device
 2. Mount the storage card on your desktop Linux-PC under a QEMU container:
   - Install supporting packages if you don't have yet: 
   - `sudo apt install qemu binfmt-support qemu-user-static systemd-container`
