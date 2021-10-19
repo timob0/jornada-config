@@ -1,6 +1,5 @@
 #!/bin/sh
-# HP Jornada Config, based on the jornada-config script
-#
+# HP Jornada Config, based on the raspi-config script
 # See LICENSE file for copyright and license details
 
 INTERACTIVE=True
@@ -146,7 +145,6 @@ do_add_user() {
   whiptail --msgbox "User created successfully." 14 60 1
 }
 
-
 do_change_locale() {
   if [ "$INTERACTIVE" = True ]; then
     dpkg-reconfigure locales
@@ -263,7 +261,7 @@ do_ssh() {
   fi
 }
 
-disable_raspi_config_at_boot() {
+disable_jornada_config_at_boot() {
   if [ -e /etc/profile.d/jornada-config.sh ]; then
     whiptail --yesno \
       "Disable this config script from next boot?" \
@@ -275,7 +273,7 @@ disable_raspi_config_at_boot() {
   fi
 }
 
-enable_raspi_config_at_boot() {
+enable_jornada_config_at_boot() {
   echo "/opt/jornada-config/jornada-config" > /etc/profile.d/jornada-config.sh
 }
 
@@ -360,11 +358,13 @@ get_wifi_connected() {
 
 do_enable_wifi() {
   pccardctl insert 0
+  sleep 3
   connmanctl enable wifi
 }
 
 do_disable_wifi() {
   connmanctl disable wifi
+  sleep 3
   pccardctl eject 0
 }
 
@@ -538,7 +538,7 @@ do_wifi_setup() {
 }
 
 do_finish() {
-  disable_raspi_config_at_boot
+  disable_jornada_config_at_boot
   if [ $ASK_TO_REBOOT -eq 1 ]; then
     whiptail --yesno "Would you like to reboot now?" 14 60 2
     if [ $? -eq 0 ]; then # yes
@@ -781,7 +781,7 @@ do
     USER=root
     ;;
   --install)
-    enable_raspi_config_at_boot
+    enable_jornada_config_at_boot
     printf "Config utility installed at next boot"
     exit 0;
     ;;

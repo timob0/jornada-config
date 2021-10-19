@@ -377,22 +377,22 @@ keycode 112 = Macro
 	shift	altgr	control	keycode 112 = VoidSymbol      
 	shift	alt	keycode 112 = VoidSymbol      
 	altgr	alt	keycode 112 = VoidSymbol      
-	shift	altgr	alt	keycode 112 = VoidSymbol      
-keycode 113 = F13             
+	shift	altgr	alt	keycode 112 = VoidSymbol
+keycode 113 = nul             
 	shift	altgr	keycode 113 = VoidSymbol      
 	altgr	control	keycode 113 = VoidSymbol      
 	shift	altgr	control	keycode 113 = VoidSymbol      
 	shift	alt	keycode 113 = VoidSymbol      
 	altgr	alt	keycode 113 = VoidSymbol      
-	shift	altgr	alt	keycode 113 = VoidSymbol      
-keycode 114 = F14             
+	shift	altgr	alt	keycode 113 = VoidSymbol        
+keycode 114 = nul             
 	shift	altgr	keycode 114 = VoidSymbol      
 	altgr	control	keycode 114 = VoidSymbol      
 	shift	altgr	control	keycode 114 = VoidSymbol      
 	shift	alt	keycode 114 = VoidSymbol      
 	altgr	alt	keycode 114 = VoidSymbol      
 	shift	altgr	alt	keycode 114 = VoidSymbol      
-keycode 115 = Help            
+keycode 115 = nul            
 	shift	altgr	keycode 115 = VoidSymbol      
 	altgr	control	keycode 115 = VoidSymbol      
 	shift	altgr	control	keycode 115 = VoidSymbol      
@@ -1366,8 +1366,8 @@ compose '0' 'A' to Aring
 compose '0' 'a' to aring
 compose 'A' 'A' to Aring
 compose 'a' 'a' to aring
-compose '°' 'A' to Aring
-compose '°' 'a' to aring
+compose 'ï¿½' 'A' to Aring
+compose 'ï¿½' 'a' to aring
 compose 'A' 'E' to AE
 compose 'a' 'e' to ae
 compose ',' 'C' to Ccedilla

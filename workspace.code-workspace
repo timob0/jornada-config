@@ -1,0 +1,36 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../linux-3.16.81_public"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.tcc": "c",
+			"l3.h": "c",
+			"sa1111.h": "c",
+			"uda134x.h": "c",
+			"delay.h": "c",
+			"bit": "c",
+			"deque": "c",
+			"string": "c",
+			"unordered_map": "c",
+			"vector": "c",
+			"optional": "c",
+			"fstream": "c",
+			"ios": "c",
+			"istream": "c",
+			"limits": "c",
+			"ostream": "c",
+			"ranges": "c",
+			"sstream": "c",
+			"streambuf": "c",
+			"system_error": "c",
+			"type_traits": "c",
+			"tuple": "c"
+		}
+	}
+}
