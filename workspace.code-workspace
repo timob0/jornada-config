@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../linux-3.16.81_public"
+		},
+		{
+			"path": "../jornada-kernelpatches_3.16"
 		}
 	],
 	"settings": {
@@ -30,7 +33,10 @@
 			"streambuf": "c",
 			"system_error": "c",
 			"type_traits": "c",
-			"tuple": "c"
+			"tuple": "c",
+			"array": "c",
+			"string_view": "c",
+			"octane.h": "c"
 		}
 	}
 }
