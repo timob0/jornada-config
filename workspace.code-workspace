@@ -36,7 +36,11 @@
 			"tuple": "c",
 			"array": "c",
 			"string_view": "c",
-			"octane.h": "c"
+			"octane.h": "c",
+			"dma-mapping.h": "c",
+			"jornada720.h": "c",
+			"pcm1622.h": "c",
+			"algorithm": "c"
 		}
 	}
 }
