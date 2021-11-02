@@ -40,7 +40,10 @@
 			"dma-mapping.h": "c",
 			"jornada720.h": "c",
 			"pcm1622.h": "c",
-			"algorithm": "c"
+			"algorithm": "c",
+			"jornada720-sac.h": "c",
+			"initializer_list": "c",
+			"utility": "c"
 		}
 	}
 }
