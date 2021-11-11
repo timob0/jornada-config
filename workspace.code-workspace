@@ -4,10 +4,7 @@
 			"path": "."
 		},
 		{
-			"path": "../linux-3.16.81_public"
-		},
-		{
-			"path": "../jornada-kernelpatches_3.16"
+			"path": "../jornada7xx-linux/linux-3.16.81"
 		}
 	],
 	"settings": {
@@ -43,7 +40,14 @@
 			"algorithm": "c",
 			"jornada720-sac.h": "c",
 			"initializer_list": "c",
-			"utility": "c"
+			"utility": "c",
+			"cstdlib": "c",
+			"ratio": "c",
+			"functional": "c",
+			"sa1100fb.h": "c",
+			"hardware.h": "c",
+			"reset.h": "c",
+			"pcm.h": "c"
 		}
 	}
 }
