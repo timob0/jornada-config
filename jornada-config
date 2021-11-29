@@ -134,13 +134,15 @@ do_add_user() {
     fi
   done
   # add the NEWUSER
-  useradd -G sudo -m -s /bin/bash $NEWUSER
-
+  useradd -G sudo,audio,video,input -m -s /bin/bash $NEWUSER
   whiptail --msgbox "You will now be asked to enter a new password for the $NEWUSER user" 14 60 1
   passwd $NEWUSER &&
 
   # create an alias to this tool
   echo "alias jconf='sudo /opt/jornada-config/jornada-config'" > /home/$NEWUSER/.bash_aliases
+
+  # setup non-password sudo
+  echo "$NEWUSER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$NEWUSER
 
   whiptail --msgbox "User created successfully." 14 60 1
 }

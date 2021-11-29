@@ -47,7 +47,9 @@
 			"sa1100fb.h": "c",
 			"hardware.h": "c",
 			"reset.h": "c",
-			"pcm.h": "c"
+			"pcm.h": "c",
+			"jornada720-common.h": "c",
+			"jornada720-uda1344.h": "c"
 		}
 	}
 }
