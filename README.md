@@ -23,7 +23,7 @@ mv /etc/resolv.conf /etc/resolv.bak
 # replace 192.168.178.1 with your routers IP
 echo "nameserver 192.168.178.1" > /etc/resolv.conf    
 
-apt-get install whiptail gparted git kbd pcmciautils busybox build-essential manpages-dev libevdev-dev 
+apt-get install whiptail gparted git kbd pcmciautils busybox build-essential manpages-dev libevdev-dev rcconf
 git clone https://github.com/timob0/jornada-config.git /opt/jornada-config
 
 cp -f /opt/jornada-config/scripts/inittab.noauto /etc/inittab
