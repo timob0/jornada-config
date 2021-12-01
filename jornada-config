@@ -147,6 +147,15 @@ do_add_user() {
   whiptail --msgbox "User created successfully." 14 60 1
 }
 
+do_rcconf() {
+  RCCONF=`which rcconf`
+  if [ -z "$RCCONF" ]; then
+    whiptail --msgbox "Please install rcconf for this menu to work (apt-get install rcconf)." 14 60
+    return 0
+  fi
+  rcconf --whiptail
+}
+
 do_change_locale() {
   if [ "$INTERACTIVE" = True ]; then
     dpkg-reconfigure locales
@@ -834,6 +843,7 @@ do_system_menu() {
     "S2 Password" "Change password for the '$USER' user" \
     "S3 Hostname" "Set name for this computer on a network" \
     "S4 Add User ..." "Add a regular user account" \
+    "S5 Services ..." "Configure system services" \
     3>&1 1>&2 2>&3)
   RET=$?
   if [ $RET -eq 1 ]; then
@@ -844,6 +854,7 @@ do_system_menu() {
       S2\ *) do_change_pass ;;
       S3\ *) do_hostname ;;
       S4\ *) do_add_user ;;
+      S5\ *) do_rcconf ;;
       *) whiptail --msgbox "Programmer error: unrecognized option" 14 60 1 ;;
     esac || whiptail --msgbox "There was an error running option $FUN" 14 60 1
   fi
